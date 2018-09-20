@@ -1,0 +1,1 @@
+npx tslint --type-check --project tsconfig.json

@@ -1,0 +1,1 @@
+( ls -l node_modules ; ls -l node_modules/@* ) | grep ^l

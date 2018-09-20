@@ -1,0 +1,1 @@
+git branch | grep \* | cut -d ' ' -f2 | sed 's/-/ /g' | awk '{$1=toupper(substr($1,0,1))substr($1,2)}1' | xargs -I % sh -c 'git commit -m "%"'

@@ -1,0 +1,14 @@
+output=$(tscheck 2>&1)
+code=$(echo $?)
+
+if [ $code -eq 1 ]
+then
+  files=$(echo "$output" | grep "Error at" | awk '{print $3}' | sed "s|$PWD/||g" | awk -F'[():]' '{print $1}')
+fi
+
+if [ $code -eq 2 ]
+then
+  files=$(echo "$output" | awk '{print $2}' | sed "s|$PWD/||g" | awk -F'[' '{print $1}')
+fi
+
+echo "$files" | sort | uniq

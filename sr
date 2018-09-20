@@ -1,0 +1,10 @@
+for d in */ ; do
+    echo ""
+    echo "-------------------"
+    echo $d
+    echo "-------------------"
+    cd $d && eval $1
+    echo "-------------------"
+    echo ""
+    cd ..
+done
