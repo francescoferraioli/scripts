@@ -1,1 +1,0 @@
-showmerged | xargs git branch -d
