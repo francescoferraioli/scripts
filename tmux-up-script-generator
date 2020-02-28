@@ -1,0 +1,18 @@
+for d in */ ; do
+    cd $d
+    echo "rename-window '${d%?}'"
+    echo "send-keys 'cd `pwd`' C-m"
+    echo "send-keys 'clear' C-m"
+    echo "split-window -h"
+    echo "send-keys 'cd `pwd`' C-m"
+    echo "send-keys 'clear' C-m"
+    echo "split-window -v"
+    echo "send-keys 'cd `pwd`' C-m"
+    echo "send-keys 'clear' C-m"
+    echo "new-window"
+    cd ..
+done
+
+echo "rename-window '${PWD##*/}'"
+echo "send-keys 'cd `pwd`' C-m"
+echo "send-keys 'clear' C-m"
