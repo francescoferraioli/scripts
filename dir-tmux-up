@@ -1,0 +1,5 @@
+pushd $1
+CONF_FILE=$(pwd | sed 's/[^a-zA-Z0-9\-]/-/g' | tail -c +2).conf
+tmux-up-script-generator > $CONF_FILE
+tmux-up $CONF_FILE
+popd
