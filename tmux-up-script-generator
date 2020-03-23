@@ -1,4 +1,31 @@
+SETUP_FILE=tmux.setup
+if [ -f "$SETUP_FILE" ]; then
+    IFS='|' read -r -a setup <<< $(cat $SETUP_FILE)
+else
+    setup=()
+fi
+
+for d in $setup; do
+    if [ -d "$d" ]; then
+        cd $d
+        echo "rename-window '$d'"
+        echo "send-keys 'cd `pwd`' C-m"
+        echo "send-keys 'clear' C-m"
+        echo "split-window -h"
+        echo "send-keys 'cd `pwd`' C-m"
+        echo "send-keys 'clear' C-m"
+        echo "split-window -v"
+        echo "send-keys 'cd `pwd`' C-m"
+        echo "send-keys 'clear' C-m"
+        echo "new-window"
+        cd ..
+    fi
+done
+
 for d in */ ; do
+    if [[ " $setup " =~ " ${d%?} " ]]; then
+        continue
+    fi
     cd $d
     echo "rename-window '${d%?}'"
     echo "send-keys 'cd `pwd`' C-m"
