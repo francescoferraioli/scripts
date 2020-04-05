@@ -8,16 +8,7 @@ fi
 for d in $setup; do
     if [ -d "$d" ]; then
         cd $d
-        echo "rename-window '$d'"
-        echo "send-keys 'cd `pwd`' C-m"
-        echo "send-keys 'clear' C-m"
-        echo "split-window -h"
-        echo "send-keys 'cd `pwd`' C-m"
-        echo "send-keys 'clear' C-m"
-        echo "split-window -v"
-        echo "send-keys 'cd `pwd`' C-m"
-        echo "send-keys 'clear' C-m"
-        echo "new-window"
+        echo "`pwd`($d)[ |-]"
         cd ..
     fi
 done
@@ -27,19 +18,8 @@ for d in */ ; do
         continue
     fi
     cd $d
-    echo "rename-window '${d%?}'"
-    echo "send-keys 'cd `pwd`' C-m"
-    echo "send-keys 'clear' C-m"
-    echo "split-window -h"
-    echo "send-keys 'cd `pwd`' C-m"
-    echo "send-keys 'clear' C-m"
-    echo "split-window -v"
-    echo "send-keys 'cd `pwd`' C-m"
-    echo "send-keys 'clear' C-m"
-    echo "new-window"
+    echo "`pwd`(${d%?})[ |-]"
     cd ..
 done
 
-echo "rename-window '${PWD##*/}'"
-echo "send-keys 'cd `pwd`' C-m"
-echo "send-keys 'clear' C-m"
+echo "`pwd`(${PWD##*/})[   ]"
