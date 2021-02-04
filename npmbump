@@ -1,0 +1,5 @@
+package=${PWD##*/} 
+
+npm version $1
+git add package.json
+git commit -m "Bump ${1} on ${package}"
