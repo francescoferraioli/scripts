@@ -1,0 +1,5 @@
+TAG="${1:-$(git cb)}"
+
+npm version prerelease
+yarn build
+npm publish --tag $TAG dist/
