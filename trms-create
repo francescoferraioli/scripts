@@ -1,5 +1,5 @@
 python3 ~/code/ftr-dev-scripts/commands/create-sample-trm-repository/run.py \
-    --source_trm ~/Documents/sample-trms/${9}.trm \
+    --source_trm ~/Documents/sample-trms/${9:-test}.trm \
     --dest_path ~/Documents/${1}-court/trm-repo \
     --num_trms ${2} \
     --recorder_name ${3} \
