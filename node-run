@@ -1,0 +1,3 @@
+SCRIPT_PATH=`dirname "$0"`
+
+node ${SCRIPT_PATH}/js/${1}.js
