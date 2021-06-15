@@ -1,0 +1,52 @@
+#!/bin/bash
+
+function usage {
+  echo "Usage: regenerate-migration [DOMAIN] [MIGRATION_NAME]"
+  echo ""
+  echo "  Will regenerate the migration with the current timestamp."
+  echo "  You will still need to make sure it is the last entry in the MigrationList."
+}
+
+if [[ $1 == '-h' || $1 == "--help" ]]; then
+  usage
+  exit 0
+fi
+
+DOMAIN=$1
+MIGRATION_NAME=$2
+
+if [ -z "$DOMAIN" ]; then
+  echo "Please enter a [DOMAIN]"
+  echo ""
+  usage
+  exit 1
+fi
+
+if [ -z "$MIGRATION_NAME" ]; then
+  echo "Please enter a [MIGRATION_NAME]"
+  echo ""
+  usage
+  exit 1
+fi
+
+MIGRATION_FILE=$(fd -1 --full-path "${DOMAIN}.*${MIGRATION_NAME}\.ts")
+
+if [ -z "$MIGRATION_FILE" ]; then
+  echo "Migration file not found for [DOMAIN] (${DOMAIN}) and [MIGRATION_NAME] (${MIGRATION_NAME})"
+  echo ""
+  usage
+  exit 1
+fi
+
+IFS='-' read -r PREVIOUS <<< $(basename $MIGRATION_FILE)
+NEW=$(node -e "console.log(new Date().getTime())")
+
+rg $PREVIOUS -l | xargs sed -i '' -e "s/${PREVIOUS}/${NEW}/g"
+
+FILES=$(fd $PREVIOUS)
+
+for FILE in $FILES
+do
+  NEW_FILE=$(echo $FILE | sed "s/${PREVIOUS}/${NEW}/g")
+  mv $FILE $NEW_FILE
+done
