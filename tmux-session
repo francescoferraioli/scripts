@@ -9,6 +9,7 @@ if [ $? != 0 ]; then
     cd $session
     tmux new-session -d -s $session
     cd ..
+    exit 0
 fi
 
 # Attach to created session
