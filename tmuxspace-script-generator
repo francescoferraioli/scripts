@@ -7,9 +7,7 @@ fi
 
 for d in $setup; do
     if [ -d "$d" ]; then
-        cd $d
-        echo "`pwd`($d)[ |-]"
-        cd ..
+        (cd $d && echo "`pwd`($d)[ |-]")
     fi
 done
 
@@ -17,9 +15,7 @@ for d in */ ; do
     if [[ " $setup " =~ " ${d%?} " ]]; then
         continue
     fi
-    cd $d
-    echo "`pwd`(${d%?})[ |-]"
-    cd ..
+    (cd $d && echo "`pwd`(${d%?})[ |-]")
 done
 
 echo "`pwd`(${PWD##*/})[   ]"
