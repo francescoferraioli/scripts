@@ -1,0 +1,3 @@
+pushd ~/Downloads > /dev/null
+echo "$(pwd)/$(ls -t | rg "Frankie Test" | head -1)"
+popd > /dev/null
