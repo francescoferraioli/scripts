@@ -1,0 +1,3 @@
+# pbcopy for windows
+tee <&0 | clip.exe
+exit 0
