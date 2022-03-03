@@ -1,0 +1,3 @@
+pushd ~/Downloads > /dev/null
+ls -t | rg "Frankie Test.*\.(qlic|qreg)" | xargs -I % rm "%"
+popd > /dev/null
