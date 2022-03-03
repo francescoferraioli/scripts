@@ -1,5 +1,0 @@
-fd .html$ | xargs -n 1 hmr-up
-
-sleep 5
-
-fd .html$ | xargs -n 1 hmr-down
