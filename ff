@@ -1,1 +1,3 @@
-ff-$1-$2
+SCRIPT_PATH=`dirname "$0"`
+
+${SCRIPT_PATH}/.ff/${1}/$2 $3 $4 $5

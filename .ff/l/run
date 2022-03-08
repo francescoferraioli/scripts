@@ -1,0 +1,2 @@
+mycommand="$1 '$(ff l get)'"
+eval $mycommand
