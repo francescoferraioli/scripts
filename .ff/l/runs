@@ -1,1 +1,1 @@
-echo $(ff l-get) | xargs  I % $1
+echo $(ff l get) | xargs  I % $1
