@@ -3,4 +3,20 @@ SCRIPT_PATH=`dirname "$0"`
 FF_OBJECT=$1
 FF_ACTION=$2
 
-${SCRIPT_PATH}/.ff/${FF_OBJECT}/${FF_ACTION} $3 $4 $5
+FF_OBJECT_ACTION_FILE=${SCRIPT_PATH}/.ff/${FF_OBJECT}/${FF_ACTION}
+
+if ! test -f "$FF_OBJECT_ACTION_FILE"; then
+  FF_OBJECT_GET_FILE=${SCRIPT_PATH}/.ff/${FF_OBJECT}/get
+  if test -f "$FF_OBJECT_GET_FILE"; then
+    if [ "$FF_ACTION" == "cat" ]; then
+      cat "$($FF_OBJECT_GET_FILE)"
+      exit 0
+    fi
+    if [ "$FF_ACTION" == "rm" ]; then
+      rm "$($FF_OBJECT_GET_FILE)"
+      exit 1
+    fi
+  fi
+fi
+
+$FF_OBJECT_ACTION_FILE $3 $4 $5
