@@ -1,12 +1,56 @@
 SCRIPT_PATH=`dirname "$0"`
 
+FF_PATH=${SCRIPT_PATH}/.ff
+
 FF_OBJECT=$1
 FF_ACTION=$2
 
-FF_OBJECT_ACTION_FILE=${SCRIPT_PATH}/.ff/${FF_OBJECT}/${FF_ACTION}
+if [[ "$FF_OBJECT" =~ ^(\-h|\-\-help)$ ]]; then
+  ls -1 $FF_PATH
+  exit 0
+fi
+
+FF_OBJECT_PATH=${FF_PATH}/${FF_OBJECT}
+
+FF_OBJECT_GET_FILE=${FF_OBJECT_PATH}/get
+
+if [[ "$FF_ACTION" =~ ^(\-h|\-\-help)$ ]]; then
+  ls -1 $FF_OBJECT_PATH
+  if test -f "$FF_OBJECT_GET_FILE"; then
+    if ! test -f "${FF_OBJECT_PATH}/cat"; then
+      echo "cat"
+    fi
+    if ! test -f "${FF_OBJECT_PATH}/rm"; then
+      echo "rm"
+    fi
+  fi
+  exit 0
+fi
+
+FF_OBJECT_ACTION_FILE=${FF_OBJECT_PATH}/${FF_ACTION}
+
+if [[ "$3" =~ ^(\-h|\-\-help)$ ]]; then
+  if test -f "$FF_OBJECT_ACTION_FILE"; then
+    cat $FF_OBJECT_ACTION_FILE
+    exit 0
+  fi
+
+  if test -f "$FF_OBJECT_GET_FILE"; then
+    if [ "$FF_ACTION" == "cat" ]; then
+      echo "cat \"\$(ff ${FF_OBJECT} get)\""
+      exit 0
+    fi
+    if [ "$FF_ACTION" == "rm" ]; then
+      echo "rm \"\$(ff ${FF_OBJECT} get)\""
+      exit 0
+    fi
+  fi
+
+  echo "Command not found!"
+  exit 1
+fi
 
 if ! test -f "$FF_OBJECT_ACTION_FILE"; then
-  FF_OBJECT_GET_FILE=${SCRIPT_PATH}/.ff/${FF_OBJECT}/get
   if test -f "$FF_OBJECT_GET_FILE"; then
     if [ "$FF_ACTION" == "cat" ]; then
       cat "$($FF_OBJECT_GET_FILE)"
