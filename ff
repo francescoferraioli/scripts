@@ -1,3 +1,6 @@
 SCRIPT_PATH=`dirname "$0"`
 
-${SCRIPT_PATH}/.ff/${1}/$2 $3 $4 $5
+FF_OBJECT=$1
+FF_ACTION=$2
+
+${SCRIPT_PATH}/.ff/${FF_OBJECT}/${FF_ACTION} $3 $4 $5
