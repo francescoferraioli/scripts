@@ -88,4 +88,9 @@ if ! test -f "$FF_OBJECT_ACTION_FILE"; then
   done
 fi
 
+if ! test -f "$FF_OBJECT_ACTION_FILE"; then
+  echo "Command not found!"
+  exit 1
+fi
+
 $FF_OBJECT_ACTION_FILE $3 $4 $5
