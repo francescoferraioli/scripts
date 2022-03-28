@@ -58,7 +58,7 @@ if ! test -f "$FF_OBJECT_ACTION_FILE"; then
     fi
     if [ "$FF_ACTION" == "rm" ]; then
       rm "$($FF_OBJECT_GET_FILE)"
-      exit 1
+      exit 0
     fi
   fi
 fi
