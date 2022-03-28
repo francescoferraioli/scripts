@@ -14,16 +14,26 @@ FF_OBJECT_PATH=${FF_PATH}/${FF_OBJECT}
 
 FF_OBJECT_GET_FILE=${FF_OBJECT_PATH}/get
 
+FF_COMMON_PATH=${FF_PATH}/.common
+FF_COMMON_DEPS=$(ls $FF_COMMON_PATH)
+
 if [[ "$FF_ACTION" =~ ^(\-h|\-\-help)$ ]]; then
   ls -1 $FF_OBJECT_PATH
-  if test -f "$FF_OBJECT_GET_FILE"; then
-    if ! test -f "${FF_OBJECT_PATH}/cat"; then
-      echo "cat"
+  for FF_COMMON_DEP in $FF_COMMON_DEPS
+  do
+    FF_OBJECT_DEP_FILE=${FF_OBJECT_PATH}/${FF_COMMON_DEP}
+    FF_COMMON_DEP_SCRIPTS_PATH=${FF_COMMON_PATH}/${FF_COMMON_DEP}
+    if test -f "$FF_OBJECT_DEP_FILE"; then
+      FF_COMMON_DEP_SCRIPTS=$(ls $FF_COMMON_DEP_SCRIPTS_PATH)
+      for FF_COMMON_DEP_SCRIPT in $FF_COMMON_DEP_SCRIPTS
+      do
+        FF_OBJECT_DEP_SCRIPT_FILE=${FF_OBJECT_PATH}/${FF_COMMON_DEP_SCRIPT}
+        if ! test -f "$FF_OBJECT_DEP_SCRIPT_FILE"; then
+          echo $FF_COMMON_DEP_SCRIPT
+        fi
+      done
     fi
-    if ! test -f "${FF_OBJECT_PATH}/rm"; then
-      echo "rm"
-    fi
-  fi
+  done
   exit 0
 fi
 
@@ -35,32 +45,47 @@ if [[ "$3" =~ ^(\-h|\-\-help)$ ]]; then
     exit 0
   fi
 
-  if test -f "$FF_OBJECT_GET_FILE"; then
-    if [ "$FF_ACTION" == "cat" ]; then
-      echo "cat \"\$(ff ${FF_OBJECT} get)\""
-      exit 0
+  for FF_COMMON_DEP in $FF_COMMON_DEPS
+  do
+    FF_OBJECT_DEP_FILE=${FF_OBJECT_PATH}/${FF_COMMON_DEP}
+    FF_COMMON_DEP_SCRIPTS_PATH=${FF_COMMON_PATH}/${FF_COMMON_DEP}
+    if test -f "$FF_OBJECT_DEP_FILE"; then
+      FF_COMMON_DEP_SCRIPTS=$(ls $FF_COMMON_DEP_SCRIPTS_PATH)
+      for FF_COMMON_DEP_SCRIPT in $FF_COMMON_DEP_SCRIPTS
+      do
+        FF_COMMON_DEP_SCRIPT_FILE=${FF_COMMON_DEP_SCRIPTS_PATH}/${FF_COMMON_DEP_SCRIPT}
+        if [ "$FF_ACTION" == "$FF_COMMON_DEP_SCRIPT" ]; then
+          cat $FF_COMMON_DEP_SCRIPT_FILE | sed "s/\$1/$FF_OBJECT/g"
+          exit 0
+        fi
+      done
     fi
-    if [ "$FF_ACTION" == "rm" ]; then
-      echo "rm \"\$(ff ${FF_OBJECT} get)\""
-      exit 0
-    fi
-  fi
+  done
 
   echo "Command not found!"
   exit 1
 fi
 
 if ! test -f "$FF_OBJECT_ACTION_FILE"; then
-  if test -f "$FF_OBJECT_GET_FILE"; then
-    if [ "$FF_ACTION" == "cat" ]; then
-      cat "$($FF_OBJECT_GET_FILE)"
-      exit 0
+  for FF_COMMON_DEP in $FF_COMMON_DEPS
+  do
+    FF_OBJECT_DEP_FILE=${FF_OBJECT_PATH}/${FF_COMMON_DEP}
+    FF_COMMON_DEP_SCRIPTS_PATH=${FF_COMMON_PATH}/${FF_COMMON_DEP}
+    if test -f "$FF_OBJECT_DEP_FILE"; then
+      FF_COMMON_DEP_SCRIPTS=$(ls $FF_COMMON_DEP_SCRIPTS_PATH)
+      for FF_COMMON_DEP_SCRIPT in $FF_COMMON_DEP_SCRIPTS
+      do
+        FF_OBJECT_DEP_SCRIPT_FILE=${FF_OBJECT_PATH}/${FF_COMMON_DEP_SCRIPT}
+        if [ "$FF_ACTION" == "$FF_COMMON_DEP_SCRIPT" ]; then
+          if ! test -f "$FF_OBJECT_DEP_SCRIPT_FILE"; then
+            FF_COMMON_DEP_SCRIPT_FILE=${FF_COMMON_DEP_SCRIPTS_PATH}/${FF_COMMON_DEP_SCRIPT}
+            $FF_COMMON_DEP_SCRIPT_FILE $FF_OBJECT $3 $4 $5
+            exit 0
+          fi
+        fi
+      done
     fi
-    if [ "$FF_ACTION" == "rm" ]; then
-      rm "$($FF_OBJECT_GET_FILE)"
-      exit 0
-    fi
-  fi
+  done
 fi
 
 $FF_OBJECT_ACTION_FILE $3 $4 $5
