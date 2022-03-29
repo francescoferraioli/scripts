@@ -79,7 +79,7 @@ if ! test -f "$FF_OBJECT_ACTION_FILE"; then
         if [ "$FF_ACTION" == "$FF_COMMON_DEP_SCRIPT" ]; then
           if ! test -f "$FF_OBJECT_DEP_SCRIPT_FILE"; then
             FF_COMMON_DEP_SCRIPT_FILE=${FF_COMMON_DEP_SCRIPTS_PATH}/${FF_COMMON_DEP_SCRIPT}
-            $FF_COMMON_DEP_SCRIPT_FILE $FF_OBJECT $3 $4 $5
+            $FF_COMMON_DEP_SCRIPT_FILE $FF_OBJECT "$3" "$4" "$5"
             exit 0
           fi
         fi
@@ -93,4 +93,4 @@ if ! test -f "$FF_OBJECT_ACTION_FILE"; then
   exit 1
 fi
 
-$FF_OBJECT_ACTION_FILE $3 $4 $5
+$FF_OBJECT_ACTION_FILE "$3" "$4" "$5"
