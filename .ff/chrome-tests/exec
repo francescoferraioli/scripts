@@ -1,0 +1,1 @@
+ff chrome-tests "$1" "$(ff chrome-tests "$2" "$3")"
