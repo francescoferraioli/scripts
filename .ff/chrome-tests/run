@@ -1,3 +1,3 @@
 pushd ~/source/repos/q/ChromeTests/bin/Debug > /dev/null
-./nunit3-console.exe ChromeTests.dll --domain=None --inprocess --wait --where "$1" $2
+echo "yes" | ./nunit3-console.exe ChromeTests.dll --domain=None --inprocess --wait --where "$1" $2
 popd > /dev/null
