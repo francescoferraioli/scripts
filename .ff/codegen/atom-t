@@ -1,0 +1,3 @@
+echo "public Atom GetAtom() => Atom.Atomise(new Atom(this), ref atomCache);
+
+ObjectA IAtomisable.GetAtom() => GetAtom();" | pbcopy

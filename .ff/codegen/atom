@@ -1,0 +1,21 @@
+if [ -z "$1" ]; then
+  echo "Supply the class name"
+fi
+
+echo "AtomSimpleCache<Atom> atomCache = new();
+
+public ObjectA GetAtom() => Atom.Atomise(new Atom(this), ref atomCache);
+
+[Serializable]
+public sealed partial class Atom : ObjectA
+{
+	public Atom($1 mutable)
+	{
+	}
+
+	public void SaveToXml(GrokXmlWriter w)
+	{
+		w.WriteStartElement(\"$1\");
+		w.WriteEndElement();
+	}
+}" | pbcopy
