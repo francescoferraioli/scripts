@@ -1,1 +1,1 @@
-ff msbuild run $(ff paths Displayr.sln)
+ff msbuild run $(ff paths Displayr.sln) -m
