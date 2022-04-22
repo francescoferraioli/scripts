@@ -1,4 +1,4 @@
 FF_SCRIPT_HOME=/c/Users/FrancescoFerraioli/scripts/.ff \
   node.exe \
   /c/Users/FrancescoFerraioli/ff/index.js \
-  "$1" "$2" "$3" "$4" "$5" "$6" "$7"
+  "$@"
