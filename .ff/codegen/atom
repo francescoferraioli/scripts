@@ -2,20 +2,33 @@ if [ -z "$1" ]; then
   echo "Supply the class name"
 fi
 
-echo "AtomSimpleCache<Atom> atomCache = new();
-
-public ObjectA GetAtom() => Atom.Atomise(new Atom(this), ref atomCache);
-
-[Serializable]
-public sealed partial class Atom : ObjectA
+echo "public partial class $1 : IAtomisable<$1.Atom>, IAtomisable
 {
-	public Atom($1 mutable)
-	{
+	private $1() {
 	}
 
-	public void SaveToXml(GrokXmlWriter w)
+	public static $1 New() => new $1();
+
+	public static $1 Xml(XmlNode node) => new $1();
+
+	public static $1 Copy($1 source) => new $1();
+
+	AtomSimpleCache<Atom> atomCache = new();
+
+	public Atom GetAtom() => Atom.Atomise(new Atom(this), ref atomCache);
+
+	ObjectA IAtomisable.GetAtom() => GetAtom();
+
+	public sealed partial class Atom : ObjectA
 	{
-		w.WriteStartElement(\"$1\");
-		w.WriteEndElement();
+		public Atom($1 mutable)
+		{
+		}
+
+		public void SaveToXml(GrokXmlWriter w)
+		{
+			w.WriteElement(\"$1\", () => {
+			});
+		}
 	}
 }" | pbcopy
