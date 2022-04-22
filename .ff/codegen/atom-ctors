@@ -1,0 +1,12 @@
+if [ -z "$1" ]; then
+  echo "Supply the class name"
+fi
+
+echo "public static $1 New() =>
+	new $1();
+
+public static $1 LoadFromXml(XmlNode node) =>
+	new $1();
+
+public static $1 Duplicate($1 source) =>
+	new $1();"

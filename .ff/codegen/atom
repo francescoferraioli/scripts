@@ -7,11 +7,7 @@ echo "public partial class $1 : IAtomisable<$1.Atom>, IAtomisable
 	private $1() {
 	}
 
-	public static $1 New() => new $1();
-
-	public static $1 Xml(XmlNode node) => new $1();
-
-	public static $1 Copy($1 source) => new $1();
+	$(ff codegen atom-ctors $1)
 
 	AtomSimpleCache<Atom> atomCache = new();
 
@@ -31,4 +27,4 @@ echo "public partial class $1 : IAtomisable<$1.Atom>, IAtomisable
 			});
 		}
 	}
-}" | pbcopy
+}"
