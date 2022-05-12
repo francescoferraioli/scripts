@@ -1,0 +1,2 @@
+ff qpack extract "$1"
+ff qpack open "$1"
