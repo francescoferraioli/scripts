@@ -1,0 +1,5 @@
+ff msbuild chrome-tests
+
+if [ $# != 0 ]; then
+    ff chrome-tests $@
+fi
