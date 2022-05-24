@@ -1,0 +1,1 @@
+ff msbuild run $(ff paths QLib.csproj) -m
