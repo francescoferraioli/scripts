@@ -1,0 +1,1 @@
+pbpaste | xargs -n 1 ff link $1 | pbcopy
