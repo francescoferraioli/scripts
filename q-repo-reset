@@ -1,3 +1,3 @@
 pushd ~/source/repos/q
-git com && git ppa && ff msbuild displayr && ff fe rebuild
+git com && git ppa && q-repo-build
 popd
