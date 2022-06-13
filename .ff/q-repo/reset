@@ -1,0 +1,3 @@
+pushd ~/source/repos/q
+git com && git ppa && ff q-repo build
+popd
