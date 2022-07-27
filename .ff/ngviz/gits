@@ -1,0 +1,3 @@
+pushd ~/source/repos > /dev/null
+gits "$1" ngviz
+popd > /dev/null
