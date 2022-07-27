@@ -1,4 +1,7 @@
 for d in */ ; do
+    if [ -n "$2" ] && [[ ! $d =~ $2 ]]; then
+        continue
+    fi
     echo ""
     echo "-------------------"
     echo $d
