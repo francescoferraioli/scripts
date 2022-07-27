@@ -1,1 +1,1 @@
-ff $1 sr-config | head -n 3 | xargs -n 3 sr-config-runner "gits" $1
+ff $1 sr-config | sr-config-exec "gits" $2

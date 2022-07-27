@@ -1,1 +1,1 @@
-ff $1 sr-config | head -n 3 | xargs -n 3 sr-config-runner "sr" $2
+ff $1 sr-config | sr-config-exec "sr" $2
