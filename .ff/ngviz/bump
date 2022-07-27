@@ -1,0 +1,1 @@
+ff ngviz sr "npm version $1" "-" "static-harness"
