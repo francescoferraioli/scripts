@@ -1,3 +1,0 @@
-pushd ~/source/repos > /dev/null
-sr "$1" "ngviz$2" $3
-popd > /dev/null

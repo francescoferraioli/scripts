@@ -1,0 +1,1 @@
+ff $1 sr "npm version $2"
