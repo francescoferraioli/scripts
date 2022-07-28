@@ -1,1 +1,1 @@
-ff $1 sr-config | sr-config-exec "sr" $2
+ff $1 sr-config | sr-config-exec "sr" "$2"

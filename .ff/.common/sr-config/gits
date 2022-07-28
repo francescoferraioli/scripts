@@ -1,1 +1,1 @@
-ff $1 sr-config | sr-config-exec "gits" $2
+ff $1 sr-config | sr-config-exec "gits" "$2"
