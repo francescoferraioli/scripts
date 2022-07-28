@@ -1,0 +1,3 @@
+pushd ~/source/repos/q/SharedWebUi/modules > /dev/null
+ff ngvizs list | xargs -I % npm-update-latest @displayr/%
+popd > /dev/null
