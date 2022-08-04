@@ -1,3 +1,0 @@
-pushd ~/source/repos > /dev/null
-ls -1 | rg ngviz- | rg -v "static-harness"
-popd > /dev/null
