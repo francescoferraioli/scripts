@@ -1,3 +1,2 @@
-pushd ~/source/repos/q
+cd ~/source/repos/q
 ff msbuild displayr && ff fe rebuild
-popd

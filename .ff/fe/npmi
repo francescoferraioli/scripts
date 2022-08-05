@@ -1,3 +1,2 @@
-pushd ~/source/repos/q > /dev/null
+cd ~/source/repos/q
 ./npm-installs.cmd
-popd > /dev/null

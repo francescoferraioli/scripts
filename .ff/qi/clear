@@ -1,3 +1,2 @@
-pushd ~/Downloads > /dev/null
+cd ~/Downloads
 ls -t | rg "QSetup.*\.exe" | xargs -I % rm "%"
-popd > /dev/null

@@ -1,3 +1,2 @@
-pushd ~/Downloads > /dev/null
+cd ~/Downloads
 echo "$(pwd)/$(ls -t | rg "QSetup.*\.exe" | head -1)"
-popd > /dev/null

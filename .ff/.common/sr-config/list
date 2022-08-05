@@ -1,8 +1,7 @@
-pushd $(ff $1 sr-config | arg-n 1) > /dev/null
+cd $(ff $1 sr-config | arg-n 1)
 if [ $(ff $1 sr-config | wc -l) == 3 ];
   then
     ls -1 | rg $(ff $1 sr-config | arg-n 2) | rg -v $(ff $1 sr-config | arg-n 3)
   else
     ls -1 | rg $(ff $1 sr-config | arg-n 2)
 fi
-popd > /dev/null

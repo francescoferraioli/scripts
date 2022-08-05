@@ -1,3 +1,2 @@
-pushd ~/source/repos/q/SharedWebUi/modules > /dev/null
+cd ~/source/repos/q/SharedWebUi/modules
 npm run $@
-popd > /dev/null

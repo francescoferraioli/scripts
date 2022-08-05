@@ -1,3 +1,2 @@
-pushd $3 > /dev/null
+cd $3
 $1 "$2" "$4" "$5"
-popd > /dev/null

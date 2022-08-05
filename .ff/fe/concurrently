@@ -1,3 +1,2 @@
-pushd ~/source/repos/q/SharedWebUi/modules > /dev/null
+cd ~/source/repos/q/SharedWebUi/modules
 node_modules/.bin/concurrently $@
-popd > /dev/null
