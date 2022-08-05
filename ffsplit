@@ -1,8 +1,1 @@
-IFS=$1
-
-read -a strarr <<< "$2"
-
-for val in "${strarr[@]}";
-do
-  printf "$val\n"
-done
+sed "s/$1/\n/g"
