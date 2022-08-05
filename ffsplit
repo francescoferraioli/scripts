@@ -1,0 +1,8 @@
+IFS=$1
+
+read -a strarr <<< "$2"
+
+for val in "${strarr[@]}";
+do
+  printf "$val\n"
+done
