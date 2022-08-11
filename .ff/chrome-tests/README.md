@@ -23,6 +23,5 @@ If there's no prefix just use `''`.
 Run the following command to get the options:
 
 ```
-cat $(ff paths q-repo)/ChromeTests/Dashboard/Playgrounds.cs | rg "public void (\S*Playgrou
-nd\S*)\(\)" -r '$1' | awk '{print $1}'
+ff chrome-tests playgrounds
 ```

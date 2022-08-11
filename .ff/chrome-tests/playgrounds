@@ -1,0 +1,1 @@
+cat $(ff paths q-repo)/ChromeTests/Dashboard/Playgrounds.cs | rg "public void (\S*Playground\S*)\(\)" -r '$1' | awk '{print $1}' | rg "(.*)Playground(.*)" -r "'\$1' '\$2'" | column -t
