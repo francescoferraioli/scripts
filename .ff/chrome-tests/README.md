@@ -13,8 +13,10 @@ ff chrome-tests [build] exec (run|debug) (test NAME|class NAME|debug-this-test)
 # Running a playground
 
 ```
-ff chrome-tests playground PREFIX SUFFIX
+ff chrome-tests [build] playground PREFIX SUFFIX
 ```
+
+If there's no prefix just use `''`.
 
 ## Examples:
 
