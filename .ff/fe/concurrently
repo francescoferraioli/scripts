@@ -1,2 +1,2 @@
 cd ~/source/repos/q/SharedWebUi/modules
-node_modules/.bin/concurrently $@
+node_modules/.bin/concurrently "$@"

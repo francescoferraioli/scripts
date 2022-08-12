@@ -1,2 +1,2 @@
 cd ~/source/repos/q/SharedWebUi/modules
-npm run $@
+npm run "$@"
