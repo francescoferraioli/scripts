@@ -1,0 +1,2 @@
+cd ~/source/repos/q
+git com && git ppa && ff qrepo build
