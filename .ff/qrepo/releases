@@ -1,0 +1,10 @@
+if [ "$1" == "latest" ]; then
+	if [ "$2" == "checkout" ]; then
+    git co $(ff qrepo releases latest | sed 's/origin\///')
+    exit
+	fi
+  ff qrepo releases | tail -n 1
+  exit
+fi
+
+git b --remote | rg DisplayrRelease
