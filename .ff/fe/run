@@ -1,2 +1,1 @@
-cd ~/source/repos/q/SharedWebUi/modules
-npm run "$@"
+ff fe exec npm run "$@"

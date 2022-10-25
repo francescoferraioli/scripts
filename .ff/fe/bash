@@ -1,1 +1,1 @@
-start bash -l -i -c "ff fe run $@"
+start bash -l -i -c "ff fe exec $@"
