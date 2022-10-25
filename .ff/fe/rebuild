@@ -1,2 +1,2 @@
 ff fe npmi
-ff fe concurrently npm:build-css npm:build-js npm:pack-ngviz
+ff fe build

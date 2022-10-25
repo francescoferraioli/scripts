@@ -1,0 +1,1 @@
+ff fe concurrently npm:build-css npm:build-js npm:pack-ngviz
