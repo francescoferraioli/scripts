@@ -1,0 +1,23 @@
+RETRO_FILENAME=~/retros/$(date '+%Y-%m-%d').txt
+
+echo "Loved
+------
+
+Loathed
+------
+
+Longed For
+------
+
+Learnt
+------
+
+Kudos
+------
+
+Actions
+------
+
+" > $RETRO_FILENAME
+
+code $RETRO_FILENAME
