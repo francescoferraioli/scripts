@@ -1,0 +1,3 @@
+ff autobump create-label major
+ff autobump create-label minor
+ff autobump create-label patch

@@ -1,0 +1,1 @@
+ff autobump $1 | xargs ff gh create-label
