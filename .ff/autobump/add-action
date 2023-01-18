@@ -1,0 +1,2 @@
+mkdir -p .github/workflows
+ff autobump action > .github/workflows/autobump.yml
