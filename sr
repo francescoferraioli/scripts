@@ -5,6 +5,12 @@ for d in */ ; do
     if [ -n "$3" ] && [[ $d =~ $3 ]]; then
         continue
     fi
+    if [[ ! -z "$SR_SHORT" ]]; then
+        OUTPUT=$(cd $d && eval $1)
+        if [ -z "$OUTPUT" ]; then
+        continue
+        fi
+    fi
     echo ""
     echo "-------------------"
     echo $d
