@@ -1,0 +1,1 @@
+SR_SHORT=true sr "$@"
