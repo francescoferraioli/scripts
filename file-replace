@@ -1,0 +1,4 @@
+filename=$(date +"%Y-%m-%dT%H:%M:%S%z")
+cat $1 | sed "s/$2/$3/g" > $filename
+rm $1
+mv $filename $1
