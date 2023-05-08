@@ -1,2 +1,2 @@
-cd ~/source/repos/q/ChromeTests/bin/Debug
+cd ~/source/repos/q/ChromeTests/bin/x64/Debug
 echo "yes" | ./nunit3-console.exe ChromeTests.dll --domain=None --inprocess --wait --where "$1" $2
