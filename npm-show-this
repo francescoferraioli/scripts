@@ -1,1 +1,1 @@
-npm show $(cat package.json | jq ".name" -r)
+npm show $(npm-this)

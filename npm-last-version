@@ -1,0 +1,1 @@
+npm show $(npm-this) versions --json | jq -r '.[-1]'
