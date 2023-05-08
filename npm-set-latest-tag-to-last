@@ -1,1 +1,0 @@
-npm dist-tag add $(npm-this)@$(npm-last-version) latest

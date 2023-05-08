@@ -1,5 +1,5 @@
 TAG="${1:-$(git cb)}"
 
 npm version prerelease
-yarn build
+npm run build
 npm publish --tag $TAG dist/
