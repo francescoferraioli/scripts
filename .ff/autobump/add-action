@@ -1,2 +1,4 @@
 mkdir -p .github/workflows
-ff autobump action > .github/workflows/autobump.yml
+
+SCRIPTPATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+cp $SCRIPTPATH/$1 .github/workflows/

@@ -1,4 +1,4 @@
-echo 'name: autobump
+name: autobump
 on:
   push:
      branches:
@@ -26,4 +26,4 @@ jobs:
       - name: Auto Bump Run
         uses: francescoferraioli/autobump@v4.0.2
         with:
-          AUTOBUMP_RUN: ${{ steps.autobump-check.outputs.AUTOBUMP_RUN }}'
+          AUTOBUMP_RUN: ${{ steps.autobump-check.outputs.AUTOBUMP_RUN }}
