@@ -1,0 +1,1 @@
+start https://www.npmjs.com/package/$(npm pkg get name | tr -d \")
