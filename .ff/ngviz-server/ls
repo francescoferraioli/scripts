@@ -1,0 +1,1 @@
+curl https://ngviz-server.$1.displayr.com/all.json -s | jq ".\"ngviz-$2\".version"
