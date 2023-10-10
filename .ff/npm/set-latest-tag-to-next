@@ -1,0 +1,1 @@
+ff npm set-latest-tag $(ff npm get-tag-version next)

@@ -1,0 +1,1 @@
+npm dist-tag add $(ff npm this)@$1 latest
