@@ -1,1 +1,1 @@
-npm show $(ff npm this)
+npm show $(ff npm name)
