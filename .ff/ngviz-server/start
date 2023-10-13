@@ -1,0 +1,2 @@
+cd $(ff paths ngviz-server)/dev-server
+npm start
