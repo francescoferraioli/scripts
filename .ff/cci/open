@@ -1,0 +1,2 @@
+FOLDER_NAME=$(basename "$PWD")
+start chrome "https://app.circleci.com/pipelines/github/Displayr/${FOLDER_NAME}"
