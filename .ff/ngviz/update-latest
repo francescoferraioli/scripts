@@ -1,0 +1,8 @@
+echo "update-latest-package-name" | pbcopy
+read -n 1 -p "Copied"
+ff npm name | pbcopy
+read -n 1 -p "Copied"
+echo "update-latest-package-version" | pbcopy
+read -n 1 -p "Copied"
+ff npm last-version | pbcopy
+echo "Copied"
