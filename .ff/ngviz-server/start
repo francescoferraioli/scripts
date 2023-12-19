@@ -1,2 +1,2 @@
-cd $(ff paths ngviz-server)/dev-server
+cd $(ff paths ngviz-server)/local-server
 npm start
