@@ -1,2 +1,3 @@
-FOLDER_NAME=$(basename "$PWD")
-start chrome "https://app.circleci.com/pipelines/github/Displayr/${FOLDER_NAME}"
+REPO_NAME=$(basename "$PWD")
+BRANCH_NAME=$(git cb)
+start chrome "https://app.circleci.com/pipelines/github/Displayr/${REPO_NAME}?branch=${BRANCH_NAME}"
