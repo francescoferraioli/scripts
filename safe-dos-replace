@@ -2,11 +2,13 @@ FROM=$1
 TO=$2
 FILE=$3
 
+echo $FILE
+
 git show HEAD:$FILE | file - | grep -q 'CRLF'
 
 SHOULD_REDOS=$?
 
-sed -i -e "s/$FROM/$TO/g" $FILE
+sed -i -z -e "s/$FROM/$TO/g" $FILE
 
 if [[ $SHOULD_REDOS == 0 ]]; then
 	unix2dos.exe $FILE
