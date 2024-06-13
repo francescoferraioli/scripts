@@ -1,9 +1,29 @@
 if [ "$1" == "latest" ]; then
 	if [ "$2" == "checkout" ]; then
-    git co $(ff qrepo releases latest | sed 's/origin\///')
+    git co $(ff qrepo releases latest)
     exit
 	fi
-  ff qrepo releases | tail -n 1
+  ff qrepo releases | tail -n 1  | sed 's/origin\///'
+  exit
+fi
+
+if [ "$1" == "revert" ]; then
+  ff qrepo releases latest checkout
+  git pull
+  git cob ff-revert-rc
+  git revert $2
+  git psu
+  git prf --base $(ff qrepo releases latest)
+  exit
+fi
+
+if [ "$1" == "cp" ]; then
+  ff qrepo releases latest checkout
+  git pull
+  git cob ff-cp-rc
+  git cp $2
+  git psu
+  git prf --base $(ff qrepo releases latest)
   exit
 fi
 
