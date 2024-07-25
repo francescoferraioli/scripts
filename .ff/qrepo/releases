@@ -27,4 +27,4 @@ if [ "$1" == "cp" ]; then
   exit
 fi
 
-git b --remote | rg DisplayrRelease
+git b --remote | rg DisplayrRelease_\\d{6}$
