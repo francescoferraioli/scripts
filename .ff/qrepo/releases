@@ -18,8 +18,8 @@ if [ "$1" == "revert" ]; then
 fi
 
 if [ "$1" == "cp" ]; then
+  git fetch
   ff qrepo releases latest checkout
-  git pull
   git cob ff-cp-rc
   git cp $2
   git psu
