@@ -1,0 +1,2 @@
+cd ~/source/repos/q/SharedWebUi/modules
+git discard package-lock.json
