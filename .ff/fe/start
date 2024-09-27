@@ -1,1 +1,1 @@
-ff fe concurrently npm:start-local-server npm:watch-js
+ff fe concurrently npm:start-local-server npm:watch-js-dashboard
