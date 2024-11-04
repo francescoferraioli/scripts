@@ -1,1 +1,1 @@
-ff fe exec npm run "$@"
+ff fe exec npm run $@
