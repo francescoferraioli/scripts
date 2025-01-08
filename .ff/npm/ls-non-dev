@@ -1,0 +1,1 @@
+npm org ls @displayr | rg "(owner|admin)"
