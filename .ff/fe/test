@@ -1,2 +1,1 @@
-ff fe run build-js -- --tests
-ff fe concurrently npm:karma-watch "npm:watch-js -- --tests"
+ff fe run karma-build-watch
