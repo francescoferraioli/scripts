@@ -19,8 +19,8 @@ fi
 
 if [ "$1" == "cp" ]; then
   git fetch
-  ff qrepo releases latest checkout
   git cob ff-cp-rc
+  git rh $(ff qrepo releases latest)
   git cp $2
   git psu
   git prf --base $(ff qrepo releases latest)
