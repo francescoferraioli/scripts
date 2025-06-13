@@ -6,35 +6,19 @@ if [ "$#" -lt 1 ]; then
   exit 1
 fi
 
-files=""
+# Search through all terms
+files="."
 for term in "$@"; do
-  # Search for current term
-  current_files=$(rg -l "$term" .)
-  current_files=$(echo "$current_files" | sed 's|\\|/|g')
+  if [ -n "$files" ]; then
+    # Use the current file list as input to rg, only search those files
+    files=$(echo "$files" | tr '\n' '\0' | xargs -0 rg -l "$term" 2>/dev/null || true)
+  fi
   
+  files=$(echo "$files" | sed 's|\\|/|g')
   echo "----------------------------------------"
   echo "Searching for: $term"
   echo "----------------------------------------"
   echo "Found files:"
-  echo "$current_files"
-  echo "----------------------------------------"
-  
-  if [ -z "$files" ]; then
-    # First term: use all results
-    files="$current_files"
-  else
-    # Find intersection: files that appear in both lists
-    intersect=""
-    while IFS= read -r file; do
-      if echo "$current_files" | grep -Fxq "$file"; then
-        intersect="$intersect$file"$'\n'
-      fi
-    done <<< "$files"
-    files=$(echo "$intersect" | sed '/^$/d')
-  fi
-  
-  echo "----------------------------------------"
-  echo "Intersecting files:"
   echo "$files"
   echo "----------------------------------------"
 done
