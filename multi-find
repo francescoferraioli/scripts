@@ -50,13 +50,13 @@ for term in "$@"; do
     files=$(echo "$files" | tr '\n' '\0' | xargs -0 rg -l $rg_options "$term" 2>/dev/null || true)
   fi
   
-  files=$(echo "$files" | sed 's|\\|/|g')
+  files=$(echo "$files" | sed 's|\\|/|g' | sort)
   
   if [ "$verbose" = true ]; then
     echo "----------------------------------------"
     echo "Searching for: $term"
     echo "----------------------------------------"
-    echo "Found files:"
+    echo "Found files: $(echo "$files" | wc -l)"
     echo "$files"
     echo "----------------------------------------"
   fi
