@@ -56,7 +56,11 @@ for term in "$@"; do
     echo "----------------------------------------"
     echo "Searching for: $term"
     echo "----------------------------------------"
-    echo "Found files: $(echo "$files" | wc -l)"
+    if [ -n "$files" ]; then
+      echo "Found files: $(echo "$files" | wc -l)"
+    else
+      echo "Found files: 0"
+    fi
     echo "$files"
     echo "----------------------------------------"
   fi
