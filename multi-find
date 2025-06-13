@@ -58,10 +58,10 @@ for term in "$@"; do
     echo "----------------------------------------"
     if [ -n "$files" ]; then
       echo "Found files: $(echo "$files" | wc -l)"
+      echo "$files"
     else
       echo "Found files: 0"
     fi
-    echo "$files"
     echo "----------------------------------------"
   fi
 done
