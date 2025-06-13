@@ -1,8 +1,44 @@
 #!/bin/bash
 
+# Default options
+verbose=false
+rg_options=""
+
+# Parse options
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -v|--verbose)
+      verbose=true
+      shift
+      ;;
+    -i|--ignore-case)
+      rg_options="$rg_options -i"
+      shift
+      ;;
+    --*)
+      # Pass through other long options to rg
+      rg_options="$rg_options $1"
+      shift
+      ;;
+    -*)
+      # Pass through other short options to rg
+      rg_options="$rg_options $1"
+      shift
+      ;;
+    *)
+      # This is a search term, break out of option parsing
+      break
+      ;;
+  esac
+done
+
 # Check for at least one search term
 if [ "$#" -lt 1 ]; then
-  echo "Usage: $0 term1 [term2 ... termN]"
+  echo "Usage: $0 [options] term1 [term2 ... termN]"
+  echo "Options:"
+  echo "  -v, --verbose     Show progress for each search term"
+  echo "  -i, --ignore-case Case insensitive search"
+  echo "  Any other rg options can be passed through"
   exit 1
 fi
 
@@ -11,14 +47,21 @@ files="."
 for term in "$@"; do
   if [ -n "$files" ]; then
     # Use the current file list as input to rg, only search those files
-    files=$(echo "$files" | tr '\n' '\0' | xargs -0 rg -l "$term" 2>/dev/null || true)
+    files=$(echo "$files" | tr '\n' '\0' | xargs -0 rg -l $rg_options "$term" 2>/dev/null || true)
   fi
   
   files=$(echo "$files" | sed 's|\\|/|g')
-  echo "----------------------------------------"
-  echo "Searching for: $term"
-  echo "----------------------------------------"
-  echo "Found files:"
-  echo "$files"
-  echo "----------------------------------------"
+  
+  if [ "$verbose" = true ]; then
+    echo "----------------------------------------"
+    echo "Searching for: $term"
+    echo "----------------------------------------"
+    echo "Found files:"
+    echo "$files"
+    echo "----------------------------------------"
+  fi
 done
+
+if [ "$verbose" = false ]; then
+  echo "$files"
+fi
