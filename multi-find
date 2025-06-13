@@ -1,0 +1,40 @@
+#!/bin/bash
+
+# Check for at least one search term
+if [ "$#" -lt 1 ]; then
+  echo "Usage: $0 term1 [term2 ... termN]"
+  exit 1
+fi
+
+files=""
+for term in "$@"; do
+  # Search for current term
+  current_files=$(rg -l "$term" .)
+  current_files=$(echo "$current_files" | sed 's|\\|/|g')
+  
+  echo "----------------------------------------"
+  echo "Searching for: $term"
+  echo "----------------------------------------"
+  echo "Found files:"
+  echo "$current_files"
+  echo "----------------------------------------"
+  
+  if [ -z "$files" ]; then
+    # First term: use all results
+    files="$current_files"
+  else
+    # Find intersection: files that appear in both lists
+    intersect=""
+    while IFS= read -r file; do
+      if echo "$current_files" | grep -Fxq "$file"; then
+        intersect="$intersect$file"$'\n'
+      fi
+    done <<< "$files"
+    files=$(echo "$intersect" | sed '/^$/d')
+  fi
+  
+  echo "----------------------------------------"
+  echo "Intersecting files:"
+  echo "$files"
+  echo "----------------------------------------"
+done
