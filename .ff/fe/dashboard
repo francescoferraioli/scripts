@@ -1,1 +1,1 @@
-ff fe run "watch-js -- --dashboard"
+ff fe concurrently "npm:watch-js -- --dashboard" npm:watch-css
