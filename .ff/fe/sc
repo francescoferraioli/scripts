@@ -1,1 +1,2 @@
+cd ~/source/repos/q
 powershell.exe -File shared-components.ps1 $1
