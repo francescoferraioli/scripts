@@ -1,0 +1,2 @@
+cd ~/source/repos/q
+powershell.exe -File generate-viewmode-snapshot-reasoning-doc.ps1  $1
