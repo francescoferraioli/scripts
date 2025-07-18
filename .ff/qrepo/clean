@@ -1,0 +1,3 @@
+
+cd ~/source/repos/q
+powershell.exe -File remove_bin_obj_directories.ps1
