@@ -1,2 +1,2 @@
 cd ~/work/canva/web
-pnpm webpack-dev-server -e $1 -p prod
+pnpm webpack-dev-server -e "$1" -p "${2:-staging}"
