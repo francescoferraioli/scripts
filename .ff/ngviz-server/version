@@ -1,5 +1,0 @@
-NGVIZ=$(basename "$PWD" )
-if ! [ -z $2 ]; then
-	NGVIZ="ngviz-$2"
-fi
-ff ngviz-server all $1 | jq ".\"$NGVIZ\".version"

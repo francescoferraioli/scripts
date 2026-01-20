@@ -1,1 +1,0 @@
-ff msbuild run $(ff paths DesktopQ.sln) -m

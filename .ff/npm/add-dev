@@ -1,2 +1,0 @@
-ff fe exec npm org set @displayr $1
-echo "Done. You should have an invite to the org in your email." | pbcopy

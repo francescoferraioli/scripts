@@ -1,2 +1,0 @@
-cd ~/Downloads
-ls -t | rg "QSetup.*\.exe" | xargs -I % rm "%"

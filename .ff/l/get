@@ -1,2 +1,0 @@
-cd ~/Downloads
-echo "$(pwd)/$(ls -t | rg "Frankie Test.*\.(qlic|qreg)" | head -1)"

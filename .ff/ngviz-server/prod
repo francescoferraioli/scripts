@@ -1,1 +1,0 @@
-ff ngviz-server $1 prod ${@:2}

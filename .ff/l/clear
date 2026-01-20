@@ -1,2 +1,0 @@
-cd ~/Downloads
-ls -t | rg "Frankie Test.*\.(qlic|qreg)" | xargs -I % rm "%"

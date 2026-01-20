@@ -1,1 +1,0 @@
-ls -t -1 | rg -i "(.*)\.qpack$" -r '$1' | head -n 1

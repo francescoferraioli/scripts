@@ -1,2 +1,0 @@
-cd ~/Downloads
-echo "$(pwd)/$(ls -t | rg "QSetup.*\.exe" | head -1)"

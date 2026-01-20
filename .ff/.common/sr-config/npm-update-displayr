@@ -1,2 +1,0 @@
-cd ~/source/repos/q/SharedWebUi/modules
-ff $1 list | xargs -I % npm install @displayr/%@latest

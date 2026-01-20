@@ -1,1 +1,0 @@
-ff chrome-tests run "$1" "--testparam use-dev-tools=true"

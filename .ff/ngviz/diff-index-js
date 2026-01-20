@@ -1,1 +1,0 @@
-diff -u dist/index\ copy.js dist/index.js | diff-so-fancy

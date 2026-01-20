@@ -1,2 +1,0 @@
-cd ~/Documents/PDP/luigi-squad
-fd -p ".*$1.*($2).*docx"

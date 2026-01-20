@@ -1,1 +1,0 @@
-ff msbuild run $(ff paths ChromeTests.csproj) -m -p:Platform=x64 -p:Configuration=Debug -p:OutputPath=bin\\x64\\Debug\\ -p:AllowUnsafeBlocks=true

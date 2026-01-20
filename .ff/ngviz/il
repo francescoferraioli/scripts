@@ -1,6 +1,0 @@
-NGVIZ="ngviz"
-if ! [ -z $1 ]; then
-	NGVIZ="ngviz-$1"
-fi
-
-ff npm il @displayr/$NGVIZ
