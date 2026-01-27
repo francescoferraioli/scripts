@@ -1,0 +1,4 @@
+# This is for when you use cmd+shift+5 and then want it in your clipboard
+# It doesn't work for github unfortunately
+latest=$(ls -t ~/Desktop/*.mov | head -n 1)
+osascript -e "set the clipboard to (POSIX file \"$latest\")"
