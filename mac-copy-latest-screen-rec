@@ -1,4 +1,13 @@
 # This is for when you use cmd+shift+5 and then want it in your clipboard
 # It doesn't work for github unfortunately
+
+# Start at the root to get absolute path
+cd
+
+# Get the latest screen recording
 latest=$(ls -t ~/Desktop/*.mov | head -n 1)
+
+echo $latest
+
+# Copy the latest screen recording to the clipboard
 osascript -e "set the clipboard to (POSIX file \"$latest\")"
