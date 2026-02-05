@@ -1,4 +1,4 @@
-FF_SCRIPT_HOME=/Users/frankie/scripts/.ff \
+FF_SCRIPT_HOME=~/scripts/.ff \
   node \
-  /Users/frankie/ff/index.js \
+  ~/ff/index.js \
   "$@"
