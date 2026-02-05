@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+PROJECT_NAME="${1:-}"
+
+if [[ -z "$PROJECT_NAME" ]]; then
+  echo "Usage: $0 <supabase-project-name>"
+  exit 1
+fi
+
+echo "🔍 Looking up Supabase project: $PROJECT_NAME"
+
+PROJECTS_JSON=$(supabase projects list --output json)
+
+PROJECT_REF=$(echo "$PROJECTS_JSON" \
+  | jq -r ".[] | select(.name == \"$PROJECT_NAME\") | .id")
+
+if [[ -z "$PROJECT_REF" || "$PROJECT_REF" == "null" ]]; then
+  echo "❌ Project '$PROJECT_NAME' not found"
+  exit 1
+fi
+
+echo "✅ Found project-ref: $PROJECT_REF"
+
+supabase link --project-ref "$PROJECT_REF"
+
+echo "🔁 Linked Supabase project:"
+echo "➡️ $PROJECT_NAME ($PROJECT_REF)"
