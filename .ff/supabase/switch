@@ -9,6 +9,11 @@ if [[ -z "$PROJECT_NAME" ]]; then
   exit 1
 fi
 
+if [[ "$(ff supabase linked)" == "$PROJECT_NAME" ]]; then
+  echo "✅ Already linked to $PROJECT_NAME"
+  exit 0
+fi
+
 echo "🔍 Looking up Supabase project: $PROJECT_NAME"
 
 PROJECTS_JSON=$(supabase projects list --output json)
@@ -24,6 +29,11 @@ fi
 echo "✅ Found project-ref: $PROJECT_REF"
 
 supabase link --project-ref "$PROJECT_REF"
+
+if [[ "$(ff supabase linked)" != "$PROJECT_NAME" ]]; then
+  echo "❌ Failed to link to $PROJECT_NAME"
+  exit 1
+fi
 
 echo "🔁 Linked Supabase project:"
 echo "➡️ $PROJECT_NAME ($PROJECT_REF)"
