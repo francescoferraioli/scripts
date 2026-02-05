@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+PROJECT_NAME="${1:-}"
+
+if [[ -z "$PROJECT_NAME" ]]; then
+  echo "Usage: $0 <vercel-project-name>"
+  exit 1
+fi
+
+if [[ ! -f ".vercel/project.json" ]]; then
+  echo "❌ .vercel/project.json not found. Run 'vercel link' once first."
+  exit 1
+fi
+
+echo "🔍 Looking up Vercel project: $PROJECT_NAME"
+
+PROJECT_JSON=$(vercel projects list --json)
+
+PROJECT_ID=$(echo "$PROJECT_JSON" \
+  | jq -r ".projects[] | select(.name == \"$PROJECT_NAME\") | .id")
+
+if [[ -z "$PROJECT_ID" || "$PROJECT_ID" == "null" ]]; then
+  echo "❌ Project '$PROJECT_NAME' not found"
+  exit 1
+fi
+
+echo "✅ Found projectId: $PROJECT_ID"
+
+TMP_FILE=$(mktemp)
+
+jq \
+  --arg projectId "$PROJECT_ID" \
+  --arg projectName "$PROJECT_NAME" \
+  '
+    .projectId = $projectId
+    | .projectName = $projectName
+  ' .vercel/project.json > "$TMP_FILE"
+
+mv "$TMP_FILE" .vercel/project.json
+
+echo "🔁 Updated .vercel/project.json"
+echo "➡️ Linked to project: $PROJECT_NAME ($PROJECT_ID)"
