@@ -1,0 +1,2 @@
+cd ~/work/canva
+bin/regen_protos.sh -i $1
