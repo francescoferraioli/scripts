@@ -1,6 +1,7 @@
-#!/usr/bin/env bash
-if [[ "$1" == "-d" ]]; then
-  otter claude-code --dangerously-skip-permissions "${@:2}"
+#!/bin/sh
+if [ "$1" = "-d" ]; then
+  shift
+  otter claude-code --dangerously-skip-permissions "$@"
 else
   otter claude-code "$@"
 fi
