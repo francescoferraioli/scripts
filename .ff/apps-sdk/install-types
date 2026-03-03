@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 PACKAGE="${1:-$(ff apps-sdk default-package)}"
 RELEASE_TYPE="${2:-$(ff apps-sdk default-release-type)}"
-npm install "$(ff apps-sdk build-path-to-built-package "$PACKAGE" "$RELEASE_TYPE")" --no-package-lock
+npm install "$(ff apps-sdk build-path-to-built-package "$PACKAGE" "$RELEASE_TYPE")/*.tgz" --no-package-lock
