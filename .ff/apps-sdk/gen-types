@@ -2,4 +2,4 @@
 PACKAGE="${1:-$(ff apps-sdk default-package)}"
 RELEASE_TYPE="${2:-$(ff apps-sdk default-release-type)}"
 cd ~/work/canva/web
-pnpm ts tools/build_apps_sdk_package/cli "$PACKAGE" -releaseType "$RELEASE_TYPE"
+pnpm ts tools/build_apps_sdk_package/cli "$PACKAGE" --releaseType "$RELEASE_TYPE"
