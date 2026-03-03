@@ -1,1 +1,11 @@
-ssh coder.frankief/frankief-aus-reg
+#!/usr/bin/env bash
+size="${1:-lrg}"
+case "$size" in
+  lrg) name="frankie-aus-lrg" ;;
+  reg) name="frankief-aus-reg" ;;
+  *)
+    echo "error: size not supported: $size" >&2
+    exit 1
+    ;;
+esac
+ssh "coder.frankief/$name"
