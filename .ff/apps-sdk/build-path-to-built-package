@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
 PACKAGE="${1:-$(ff apps-sdk default-package)}"
 RELEASE_TYPE="${2:-$(ff apps-sdk default-release-type)}"
-echo "~/work/canva/web/target/apps_sdk/$RELEASE_TYPE/$PACKAGE"
+if [ "$RELEASE_TYPE" == "experimental" ]; then
+  RELEASE_TYPE="early_preview"
+fi
+echo "${HOME}/work/canva/web/target/apps_sdk/$RELEASE_TYPE/$PACKAGE"
