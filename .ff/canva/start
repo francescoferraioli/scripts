@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 env="${1:-staging}"
-shift || true
+[[ $# -ge 1 ]] && shift
 
 # Build -e args from remaining params (default to editor if none)
 extra_es=("${@:-editor}")
