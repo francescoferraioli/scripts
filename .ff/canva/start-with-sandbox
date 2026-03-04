@@ -2,4 +2,6 @@
 # Call start with app_sandbox_editor added to the -e list
 env="${1:-staging}"
 [[ $# -ge 1 ]] && shift
-ff canva start "$env" app_sandbox_editor "$@"
+# Default to editor as page when nothing provided
+pages=("${@:-editor}")
+ff canva start "$env" app_sandbox_editor "${pages[@]}"
