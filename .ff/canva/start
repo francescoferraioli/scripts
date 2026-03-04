@@ -1,2 +1,17 @@
+#!/usr/bin/env bash
+env="${1:-staging}"
+shift || true
+
+# Build -e args from remaining params (default to editor if none)
+extra_es=("${@:-editor}")
+if [[ ${#extra_es[@]} -gt 1 ]]; then
+  export MULTI_COMPILER=true
+fi
+
+e_args=()
+for e in "${extra_es[@]}"; do
+  e_args+=(-e "$e")
+done
+
 cd ~/work/canva/web
-pnpm webpack-dev-server -e "${1:-editor}" -p "${2:-staging}"
+pnpm webpack-dev-server -p "$env" "${e_args[@]}"

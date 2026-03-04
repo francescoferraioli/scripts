@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Call start with app_sandbox_editor added to the -e list
+env="${1:-staging}"
+shift || true
+ff canva start "$env" app_sandbox_editor "$@"
