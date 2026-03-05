@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 PACKAGE="${1:-$(ff apps-sdk default-package)}"
 RELEASE_TYPE="${2:-$(ff apps-sdk default-release-type)}"
-SCRIPT="npm pack"
+SCRIPT="rm -f *.tgz && npm pack"
 ff apps-sdk run-script-at-built-package "$PACKAGE" "$RELEASE_TYPE" "$SCRIPT"
