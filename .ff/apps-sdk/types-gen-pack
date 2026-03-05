@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+ff apps-sdk types-gen
+ff apps-sdk types-pack
