@@ -1,0 +1,2 @@
+#!/bin/sh
+otter claude-code --dangerously-skip-permissions "$@"

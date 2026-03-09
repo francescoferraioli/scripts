@@ -1,7 +1,0 @@
-#!/bin/sh
-if [ "$1" = "-d" ]; then
-  shift
-  otter claude-code --dangerously-skip-permissions "$@"
-else
-  otter claude-code "$@"
-fi
