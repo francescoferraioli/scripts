@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-GH_TOKEN=$(coder external-auth access-token github-canva) ~/work/canva/tools/dotslash/bin/gh
+GH_TOKEN=$(coder external-auth access-token github-canva) ~/work/canva/tools/dotslash/bin/gh "$@"
