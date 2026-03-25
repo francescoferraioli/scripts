@@ -21,7 +21,7 @@ for e in "${extra_es[@]}"; do
   e_args+=(-e "$e")
 done
 
-sm_arg=(-s false)
+sm_arg=()
 [[ "$source_maps" == true ]] && sm_arg=(-s true)
 
 cd ~/work/canva/web
