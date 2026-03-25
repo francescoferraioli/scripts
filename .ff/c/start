@@ -2,8 +2,16 @@
 env="${1:-staging}"
 [[ $# -ge 1 ]] && shift
 
+# Optional second arg: sm → source maps (-s true); everything else is -e entries
+source_maps=false
+if [[ "${1:-}" == "sm" ]]; then
+  source_maps=true
+  shift
+fi
+
 # Build -e args from remaining params (default to editor if none)
 extra_es=("${@:-editor}")
+
 if [[ ${#extra_es[@]} -gt 1 ]]; then
   export MULTI_COMPILER=true
 fi
@@ -13,5 +21,8 @@ for e in "${extra_es[@]}"; do
   e_args+=(-e "$e")
 done
 
+sm_arg=(-s false)
+[[ "$source_maps" == true ]] && sm_arg=(-s true)
+
 cd ~/work/canva/web
-pnpm webpack-dev-server -p "$env" "${e_args[@]}"
+pnpm webpack-dev-server -p "$env" "${sm_arg[@]}" "${e_args[@]}"
