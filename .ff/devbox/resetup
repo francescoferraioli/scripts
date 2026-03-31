@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+cd "$HOME"
+dotfiles/canva-devbox/install.sh
+dotfiles/canva-devbox/resync.sh
