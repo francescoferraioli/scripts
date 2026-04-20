@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+ssh -o BatchMode=yes -o ConnectTimeout=300 "coder.frankief/$1" 'bash -lc "$HOME/scripts/ff devbox resetup"'
