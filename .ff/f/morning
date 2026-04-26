@@ -1,1 +1,3 @@
-ff otter mcp-setup ; ff devbox wake-all
+ff otter mcp-setup &
+ff devbox wake-all &
+wait

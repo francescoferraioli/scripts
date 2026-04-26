@@ -1,5 +1,6 @@
 devboxes=("totti" "pirlo" "maldini")
 
 for devbox in "${devboxes[@]}"; do
-  ff devbox wake "$devbox"
+  ff devbox wake "$devbox" &
 done
+wait
