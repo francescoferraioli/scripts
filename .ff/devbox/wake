@@ -1,2 +1,9 @@
 #!/usr/bin/env bash
-ssh -o BatchMode=yes -o ConnectTimeout=300 "coder.frankief/$1" 'bash -lc "$HOME/scripts/ff devbox resetup"'
+if [[ $# -eq 0 ]]; then
+  echo "usage: ff devbox wake <devbox> [<devbox>...]" >&2
+  exit 1
+fi
+for devbox in "$@"; do
+  ssh -o BatchMode=yes -o ConnectTimeout=300 "coder.frankief/$devbox" 'bash -lc "$HOME/scripts/ff devbox resetup"' &
+done
+wait

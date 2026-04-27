@@ -1,3 +1,5 @@
 ff otter mcp-setup &
-ff devbox wake-all &
+if [[ $# -gt 0 ]]; then
+  ff devbox wake "$@" &
+fi
 wait
