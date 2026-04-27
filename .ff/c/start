@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-env="${1:-staging}"
-[[ $# -ge 1 ]] && shift
 
 # Optional flags before -e entries: sm → source maps, t → infra highway tunnel
 optional_args=()
@@ -11,6 +9,9 @@ while [[ "${1:-}" == "sm" || "${1:-}" == "t" ]]; do
   esac
   shift
 done
+
+env="${1:-staging}"
+[[ $# -ge 1 ]] && shift
 
 # Build -e args from remaining params (default to editor if none)
 extra_es=("${@:-editor}")
