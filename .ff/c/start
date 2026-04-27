@@ -2,12 +2,15 @@
 env="${1:-staging}"
 [[ $# -ge 1 ]] && shift
 
-# Optional second arg: sm → source maps (-s true); everything else is -e entries
-source_maps=false
-if [[ "${1:-}" == "sm" ]]; then
-  source_maps=true
+# Optional flags before -e entries: sm → source maps, t → infra highway tunnel
+optional_args=()
+while [[ "${1:-}" == "sm" || "${1:-}" == "t" ]]; do
+  case "$1" in
+    sm) optional_args+=(-s true) ;;
+    t) optional_args+=(-t enabled) ;;
+  esac
   shift
-fi
+done
 
 # Build -e args from remaining params (default to editor if none)
 extra_es=("${@:-editor}")
@@ -21,8 +24,5 @@ for e in "${extra_es[@]}"; do
   e_args+=(-e "$e")
 done
 
-sm_arg=()
-[[ "$source_maps" == true ]] && sm_arg=(-s true)
-
 cd ~/work/canva/web
-pnpm webpack-dev-server -p "$env" "${sm_arg[@]}" "${e_args[@]}"
+pnpm webpack-dev-server -p "$env" "${optional_args[@]}" "${e_args[@]}"
