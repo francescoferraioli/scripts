@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+
+# Usage:
+#   ff c emu [device] [ios|android] [dev|staging|prod] SLUG
+# Examples:
+#   ff c emu double-wife
+#   ff c emu device android dev double-wife
+
+use_device=false
+platform="ios"
+env="staging"
+slug=""
+unknown_args=()
+
+for arg in "$@"; do
+  token="${arg,,}"
+  case "$token" in
+    device|--device)
+      use_device=true
+      ;;
+    ios|android)
+      platform="$token"
+      ;;
+    dev|staging|prod|production)
+      env="$token"
+      ;;
+    *)
+      unknown_args+=("$arg")
+      ;;
+  esac
+done
+
+if [[ ${#unknown_args[@]} -eq 0 ]]; then
+  echo "Missing SLUG."
+  echo "Usage: ff c emu [device] [ios|android] [dev|staging|prod] SLUG"
+  exit 1
+fi
+
+if [[ ${#unknown_args[@]} -gt 1 ]]; then
+  echo "Too many unknown arguments: ${unknown_args[*]}"
+  echo "Usage: ff c emu [device] [ios|android] [dev|staging|prod] SLUG"
+  exit 1
+fi
+
+slug="${unknown_args[0]}"
+
+base_url="https://frankief-${slug}.highway.canva-internal.dev"
+
+cmd=(emu "$platform")
+if [[ "$use_device" == "true" ]]; then
+  cmd+=(--device)
+fi
+cmd+=(--proxy "$env" --base-url "$base_url")
+
+"${cmd[@]}"
