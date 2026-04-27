@@ -2,13 +2,16 @@
 
 # Optional flags before -e entries: sm → source maps, t → infra highway tunnel
 optional_args=()
+source_maps=false
 while [[ "${1:-}" == "sm" || "${1:-}" == "t" ]]; do
   case "$1" in
-    sm) optional_args+=(-s true) ;;
+    sm) source_maps=true ;;
     t) optional_args+=(-t enabled) ;;
   esac
   shift
 done
+
+optional_args+=(-s "$source_maps")
 
 env="${1:-staging}"
 [[ $# -ge 1 ]] && shift
