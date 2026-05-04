@@ -1,4 +1,4 @@
-ff otter mcp-setup &
+ff otter mcp-setup
 if [[ $# -gt 0 ]]; then
   ff devbox wake "$@" &
 fi
