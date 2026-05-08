@@ -1,3 +1,4 @@
+mkdir -p ~/.canva-cookies
 op-read "op://Employee/CANVA_COOKIES_PROD/notesPlain" > ~/.canva-cookies/prod.js
 op-read "op://Employee/CANVA_COOKIES_STAGING/notesPlain" > ~/.canva-cookies/staging.js
 op-read "op://Employee/CANVA_COOKIES_DEV/notesPlain" > ~/.canva-cookies/dev.js
