@@ -1,0 +1,141 @@
+#!/usr/bin/env python3
+"""1Password CLI read — same session/sign-in pattern as start-assistant-dev."""
+import os
+import subprocess
+import sys
+import time
+
+SHELL = "/bin/bash"
+# Separate from start-assistant-dev (~/.cache/start-assistant-dev/op_session)
+OP_SESSION_CACHE = os.path.expanduser("~/.cache/op-read/op_session")
+
+
+def run(
+    cmd: str | list[str],
+    check: bool = True,
+    capture: bool = True,
+    extra_env: dict[str, str] | None = None,
+) -> subprocess.CompletedProcess:
+    env = {**os.environ, **extra_env} if extra_env else None
+    return subprocess.run(
+        cmd,
+        shell=isinstance(cmd, str),
+        executable=SHELL if isinstance(cmd, str) else None,
+        capture_output=capture,
+        text=True,
+        check=check,
+        env=env,
+    )
+
+
+def _load_op_session_cache() -> bool:
+    """Load cached OP_SESSION_* vars into os.environ. Returns True only if at
+    least one session variable was actually loaded."""
+    if not os.path.exists(OP_SESSION_CACHE):
+        return False
+    try:
+        loaded = 0
+        with open(OP_SESSION_CACHE) as f:
+            for line in f:
+                line = line.strip()
+                if "=" in line:
+                    key, value = line.split("=", 1)
+                    if key.startswith("OP_SESSION"):
+                        os.environ[key] = value
+                        loaded += 1
+        return loaded > 0
+    except OSError:
+        return False
+
+
+def _op_session_valid() -> bool:
+    result = run("op account get", check=False)
+    return result.returncode == 0
+
+
+def _save_op_session_cache(token_env: dict[str, str]) -> None:
+    os.makedirs(os.path.dirname(OP_SESSION_CACHE), exist_ok=True)
+    tmp = OP_SESSION_CACHE + ".tmp"
+    with open(tmp, "w") as f:
+        os.chmod(tmp, 0o600)
+        for key, value in token_env.items():
+            f.write(f"{key}={value}\n")
+    os.replace(tmp, OP_SESSION_CACHE)
+
+
+def op_signin() -> None:
+    def msg(*args: object) -> None:
+        print(*args, file=sys.stderr)
+
+    cache_exists = os.path.exists(OP_SESSION_CACHE)
+    msg(f"    Cache: {'found' if cache_exists else 'not found'} ({OP_SESSION_CACHE})")
+
+    if cache_exists:
+        cache_loaded = _load_op_session_cache()
+        if not cache_loaded:
+            msg("    Cache: empty or no OP_SESSION_* vars — signing in")
+        else:
+            msg("    Cache: loaded session token, checking validity...")
+            if _op_session_valid():
+                msg("    Session still valid — skipping sign-in")
+                return
+            else:
+                msg("    Session token expired — signing in again")
+    else:
+        msg("    Signing in (first run or cache cleared)")
+
+    result = subprocess.run(
+        ["/bin/bash", "-c", "op signin --force"],
+        stdin=sys.stdin,
+        stdout=subprocess.PIPE,
+        stderr=sys.stderr,
+        text=True,
+    )
+    if result.returncode != 0:
+        print("ERROR: 1Password sign-in failed.", file=sys.stderr)
+        sys.exit(1)
+    token_env: dict[str, str] = {}
+    for line in result.stdout.strip().splitlines():
+        line = line.strip()
+        if line.startswith("export "):
+            line = line[len("export ") :]
+        if "=" in line:
+            key, value = line.split("=", 1)
+            value = value.strip('"')
+            os.environ[key] = value
+            if key.startswith("OP_SESSION"):
+                token_env[key] = value
+    if token_env:
+        _save_op_session_cache(token_env)
+        msg(f"    Signed in — session cached ({', '.join(token_env.keys())})")
+    else:
+        msg("    WARNING: signed in but no OP_SESSION_* token found in output")
+        msg("    Subsequent op commands may still fail")
+
+
+def main() -> None:
+    refs = sys.argv[1:]
+    if not refs:
+        print("usage: op-read <op-reference> [more...]", file=sys.stderr)
+        sys.exit(1)
+
+    op_signin()
+
+    for ref in refs:
+        result = run(f'op read "{ref}"', check=False)
+        if result.returncode != 0 or not result.stdout.strip():
+            print(f"    {ref}: read failed, retrying in 1s...", file=sys.stderr)
+            time.sleep(1)
+            result = run(f'op read "{ref}"', check=False)
+        if result.returncode == 0 and result.stdout.strip():
+            print(result.stdout.strip())
+        else:
+            print(f"ERROR: Failed to read {ref}", file=sys.stderr)
+            err = (result.stderr or "").strip()
+            if err:
+                print(err, file=sys.stderr)
+            sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
