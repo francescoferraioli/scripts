@@ -1,23 +1,45 @@
 #!/usr/bin/env bash
 
-# Optional flags before -e entries: sm → source maps, t → infra highway tunnel
+# Optional flags before -e entries: sm_mode via no-sm / sm (last wins), t → infra highway tunnel
 optional_args=()
-source_maps="-s false"
-while [[ "${1:-}" == "sm" || "${1:-}" == "t" ]]; do
+sm_mode=default
+while [[ "${1:-}" == "no-sm" || "${1:-}" == "sm" || "${1:-}" == "t" ]]; do
   case "$1" in
-    sm) source_maps="" ;;
+    no-sm) sm_mode=no_sm ;;
+    sm) sm_mode=sm ;;
     t) optional_args+=(-t enabled) ;;
   esac
   shift
 done
-
-optional_args+=($source_maps)
 
 env="${1:-staging}"
 [[ $# -ge 1 ]] && shift
 
 # Build -e args from remaining params (default to editor if none)
 extra_es=("${@:-editor}")
+
+editor_included=false
+for e in "${extra_es[@]}"; do
+  if [[ "$e" == "editor" ]]; then
+    editor_included=true
+    break
+  fi
+done
+
+use_source_maps=true
+case "$sm_mode" in
+  no_sm) use_source_maps=false ;;
+  sm) ;;
+  default)
+    if [[ "$editor_included" == true ]]; then
+      use_source_maps=false
+    fi
+    ;;
+esac
+
+if [[ "$use_source_maps" == false ]]; then
+  optional_args+=(-s false)
+fi
 
 if [[ ${#extra_es[@]} -gt 1 ]]; then
   export MULTI_COMPILER=true
