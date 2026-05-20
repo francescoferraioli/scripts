@@ -1,0 +1,2 @@
+cd ~/source/repos/sabina/packages/serverless
+yarn dev:here db stripe
