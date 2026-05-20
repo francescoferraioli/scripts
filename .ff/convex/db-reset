@@ -1,0 +1,2 @@
+cd ~/source/repos/sabina/packages/convex-portal
+yarn sb:local:reset
