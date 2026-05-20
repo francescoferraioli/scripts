@@ -1,0 +1,2 @@
+cd ~/source/repos/sabina/
+yarn convex:deploy
