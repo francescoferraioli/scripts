@@ -1,0 +1,1 @@
+ff c c -w monitor-pr-$1 "/monitor-pr $1"
