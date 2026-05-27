@@ -1,0 +1,1 @@
+pptx-speaker-notes | rg -v "^1.7.2013$" | rg -v "^‹#›$" | pbcopy
