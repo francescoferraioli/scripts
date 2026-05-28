@@ -1,1 +1,1 @@
-open -na "Cursor" --args --user-data-dir="$HOME/CursorQuiet"
+open -na "Cursor" --args --user-data-dir="$HOME/CursorQuiet" "$@"
