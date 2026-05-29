@@ -41,10 +41,6 @@ if [[ "$use_source_maps" == false ]]; then
   optional_args+=(-s false)
 fi
 
-# if [[ ${#extra_es[@]} -gt 1 ]]; then
-#   export MULTI_COMPILER=true
-# fi
-
 e_args=()
 for e in "${extra_es[@]}"; do
   e_args+=(-e "$e")
