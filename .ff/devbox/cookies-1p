@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+env="${1:-prod}"
+case "$env" in
+  prod|staging|dev) ;;
+  *)
+    echo "usage: ff devbox cookies-1p [prod|staging|dev]" >&2
+    exit 1
+    ;;
+esac
+
+case "$env" in
+  prod) item="CANVA_COOKIES_PROD" ;;
+  staging) item="CANVA_COOKIES_STAGING" ;;
+  dev) item="CANVA_COOKIES_DEV" ;;
+esac
+
+vault="Employee"
+ref="op://${vault}/${item}/notesPlain"
+
+clip="$(mktemp)"
+template="$(mktemp)"
+trap 'rm -f "$clip" "$template"' EXIT
+
+pbpaste > "$clip"
+if [[ ! -s "$clip" ]]; then
+  echo "clipboard is empty" >&2
+  exit 1
+fi
+
+op-read "$ref" >/dev/null
+
+op item get "$item" --vault "$vault" --format json > "$template"
+# op item edit --template expects full item JSON. Patch notesPlain from the
+# clipboard file here so multiline cookie JS is not passed through the shell.
+python3 - "$template" "$clip" <<'PY'
+import json
+import sys
+
+template_path, clip_path = sys.argv[1], sys.argv[2]
+with open(template_path) as f:
+    item = json.load(f)
+with open(clip_path) as f:
+    notes = f.read()
+for field in item.get("fields", []):
+    if field.get("id") == "notesPlain" or field.get("purpose") == "NOTES":
+        field["value"] = notes
+        break
+else:
+    sys.exit("notesPlain field not found on item")
+with open(template_path, "w") as f:
+    json.dump(item, f)
+PY
+
+op item edit "$item" --vault "$vault" --template="$template"
+echo "Updated ${item} notes from clipboard" >&2
