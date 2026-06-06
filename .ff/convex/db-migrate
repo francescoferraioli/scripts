@@ -1,2 +1,2 @@
-cd ~/source/repos/sabina/packages/convex-portal
-yarn sb:local:migrate
+cd ~/source/repos/sabina
+yarn db:local:migrate
