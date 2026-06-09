@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+# Usage:
+#   ff c devpod [service] [target] [reason]
+# Examples:
+#   ff c devpod
+#   ff c devpod ecosystem_frontend
+#   ff c devpod ecosystem_frontend staging "OAuth soy template changes"
+
+service="${1:-ecosystem_frontend}"
+[[ $# -ge 1 ]] && shift
+
+target="${1:-staging}"
+[[ $# -ge 1 ]] && shift
+
+reason="${*:-Testing changes to ${service}}"
+
+name="${service//_/-}"
+bazel_target="//backend/${service}:image"
+
+infra devpod create \
+  --name "$name" \
+  --target "$target" \
+  --reason "$reason" \
+  --bazel-target "$bazel_target"
