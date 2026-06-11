@@ -1,8 +1,8 @@
-otter claude-code auth login
-otter config mcp enable-all
-otter claude-code mcp add otter -- otter mcp serve
+# otter claude-code auth login
+# otter claude-code mcp add otter -- otter mcp serve
 
 # Setup Jira MCP
+otter config mcp enable-all
 otter config mcp secret jira_email frankief@canva.com
 otter config mcp secret jira_url https://canva.atlassian.net
 otter config mcp secret jira_api_token "$(op read "op://Employee/Frankie JIRA Token/password")"
