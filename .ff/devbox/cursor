@@ -1,3 +1,14 @@
-command=${2:-cursor}
-# echo $command
-$command --remote ssh-remote+coder-vscode.coder.canva-internal.com--frankief--$1.main /home/coder/work/canva
+#!/usr/bin/env bash
+command=cursor
+canva_number=
+
+for arg in "${2:-}" "${3:-}"; do
+  [[ -z "$arg" ]] && continue
+  if [[ "$arg" =~ ^[0-9]+$ ]]; then
+    canva_number=$arg
+  else
+    command=$arg
+  fi
+done
+
+$command --remote ssh-remote+coder-vscode.coder.canva-internal.com--frankief--$1.main /home/coder/work/canva$canva_number
