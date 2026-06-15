@@ -1,1 +1,1 @@
-ff devbox cursor maldini "ff c quiet"
+ff devbox cursor maldini 'command:ff c quiet'

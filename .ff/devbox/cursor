@@ -1,14 +1,19 @@
 #!/usr/bin/env bash
 command=cursor
 canva_number=
+repo=
 
-for arg in "${2:-}" "${3:-}"; do
+for arg in "${@:2}"; do
   [[ -z "$arg" ]] && continue
-  if [[ "$arg" =~ ^[0-9]+$ ]]; then
+  if [[ "$arg" =~ ^command:(.+)$ ]]; then
+    command="${BASH_REMATCH[1]}"
+  elif [[ "$arg" =~ ^repo:(.+)$ ]]; then
+    repo="${BASH_REMATCH[1]}"
+  elif [[ "$arg" =~ ^[0-9]+$ ]]; then
     canva_number=$arg
-  else
-    command=$arg
   fi
 done
 
-$command --remote ssh-remote+coder-vscode.coder.canva-internal.com--frankief--$1.main /home/coder/work/canva$canva_number
+repo=${repo:-canva$canva_number}
+
+$command --remote ssh-remote+coder-vscode.coder.canva-internal.com--frankief--$1.main /home/coder/work/$repo
