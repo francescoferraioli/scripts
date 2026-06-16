@@ -1,0 +1,12 @@
+cd ~/source/repos/sabina/packages/serverless
+case "$1" in
+  trial) user=small@trial.com ;;
+  monthly) user=small@monthly.com ;;
+  yearly) user=medium@yearly.com ;;
+  *)
+    echo "Usage: ff convex advance <trial|monthly|yearly> <duration>"
+    exit 1
+    ;;
+esac
+duration=$2
+yarn convex-stripe-dev advance-clock "$user" "$duration"
