@@ -1,0 +1,4 @@
+cd ~/source/repos/sabina
+yarn db:local:seed
+cd packages/serverless
+yarn seed:convex-stripe-test-users
