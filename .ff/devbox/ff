@@ -31,7 +31,4 @@ if [[ $# -eq 0 ]]; then
   exit 1
 fi
 
-ff_args=$(printf ' %q' "$@")
-ff_args=${ff_args:1}
-
-ff devbox run "${devboxes[@]}" -- bash -lc "\$HOME/scripts/ff ${ff_args}"
+ff devbox run "${devboxes[@]}" -- ff "$@"
