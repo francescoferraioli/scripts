@@ -1,2 +1,5 @@
 cd ~/source/repos/sabina/packages/convex-portal
-yarn dev:db
+case "$1" in
+  dev) yarn dev ;;
+  *) yarn dev:db ;;
+esac
