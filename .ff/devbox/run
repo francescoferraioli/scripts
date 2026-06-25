@@ -47,11 +47,20 @@ remote_script() {
   fi
 }
 
+prefix_output() {
+  local devbox=$1
+  while IFS= read -r line || [[ -n "${line:-}" ]]; do
+    printf '%s: %s\n' "$devbox" "$line"
+  done
+}
+
 for devbox in "${devboxes[@]}"; do
-  script=$(remote_script "$@")
-  ssh -o BatchMode=yes -o ConnectTimeout=300 \
-    -o ClearAllForwardings=yes -o PermitLocalCommand=no \
-    "coder.frankief/$devbox" \
-    bash -lc "$(printf '%q' "$script")" &
+  (
+    script=$(remote_script "$@")
+    ssh -o BatchMode=yes -o ConnectTimeout=300 \
+      -o ClearAllForwardings=yes -o PermitLocalCommand=no \
+      "coder.frankief/$devbox" \
+      bash -lc "$(printf '%q' "$script")" 2>&1 | prefix_output "$devbox"
+  ) &
 done
 wait
