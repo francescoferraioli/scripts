@@ -36,14 +36,22 @@ if [[ $# -eq 0 ]]; then
   exit 1
 fi
 
-remote_cmd=$(printf ' %q' "$@")
-remote_cmd=${remote_cmd:1}
-remote_shell="export PATH=\"\$HOME/scripts:\$PATH\"; ${remote_cmd}"
+remote_script() {
+  echo 'export PATH="$HOME/scripts:$PATH"'
+  if [[ $# -eq 1 ]]; then
+    # One quoted string: run as shell (supports &&, ||, pipes, etc.)
+    echo "$1"
+  else
+    local cmd
+    cmd=$(printf ' %q' "$@")
+    echo "${cmd:1}"
+  fi
+}
 
 for devbox in "${devboxes[@]}"; do
-  ssh -o BatchMode=yes -o ConnectTimeout=300 \
+  remote_script "$@" | ssh -o BatchMode=yes -o ConnectTimeout=300 \
     -o ClearAllForwardings=yes -o PermitLocalCommand=no \
     "coder.frankief/$devbox" \
-    bash -lc "$(printf '%q' "$remote_shell")" &
+    bash -ls &
 done
 wait
