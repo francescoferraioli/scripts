@@ -1,0 +1,1 @@
+taz check --fix --skip-tasks jest --skip-tasks sonarlint --tui=false "$@"
