@@ -1,0 +1,7 @@
+#!/bin/sh
+set -e
+root="$(git rev-parse --show-toplevel)" || exit 1
+cd "$root"
+command -v taz >/dev/null 2>&1 || { echo "canva-taz-fmt: taz not on PATH" >&2; exit 1; }
+taz fmt
+git add -u
