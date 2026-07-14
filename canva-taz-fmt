@@ -3,5 +3,32 @@ set -e
 root="$(git rev-parse --show-toplevel)" || exit 1
 cd "$root"
 command -v taz >/dev/null 2>&1 || { echo "canva-taz-fmt: taz not on PATH" >&2; exit 1; }
+
+staged_list="$(mktemp)"
+unstaged_list="$(mktemp)"
+trap 'rm -f "$staged_list" "$unstaged_list"' EXIT
+
+git diff --cached --name-only | sort > "$staged_list"
+git diff --name-only | sort > "$unstaged_list"
+
+partial=0
+while IFS= read -r file; do
+  [ -z "$file" ] && continue
+  echo "canva-taz-fmt: partial stage: $file" >&2
+  partial=1
+done <<EOF
+$(comm -12 "$staged_list" "$unstaged_list")
+EOF
+
 taz fmt
-git add -u
+
+if [ "$partial" -ne 0 ]; then
+  echo "canva-taz-fmt: skipping git add because some staged files also have unstaged changes" >&2
+  exit 0
+fi
+
+if [ ! -s "$staged_list" ]; then
+  exit 0
+fi
+
+git add --pathspec-from-file="$staged_list"
