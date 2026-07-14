@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Deserialize Canva wire JSON using generated web TypeScript protos from a local checkout.
+# Lives in ~/scripts; run from a Canva checkout (or set CANVA_ROOT).
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+exec node "${SCRIPT_DIR}/js/canva-json-decode.mjs" "$@"
