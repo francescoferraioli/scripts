@@ -1,5 +1,9 @@
 cd ~/source/repos/sabina/packages/convex-portal
-case "$1" in
-  dev) yarn dev ;;
-  *) yarn dev:db ;;
+target="${1:-local}"
+case "$target" in
+  local|dev|prod) yarn "dev:$target" ;;
+  *)
+    echo "Usage: front [local|dev|prod]" >&2
+    exit 1
+    ;;
 esac
