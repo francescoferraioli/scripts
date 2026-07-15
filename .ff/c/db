@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+FLAVOR="${1:-}"
+MODE="${2:-}"
+
+usage() {
+  echo "usage: ff c/db <prod|staging|dev> <read|write>" >&2
+  exit 1
+}
+
+if [[ -z "$FLAVOR" || -z "$MODE" ]]; then
+  usage
+fi
+
+case "$FLAVOR" in
+  prod|staging|dev) ;;
+  *)
+    echo "error: flavor must be prod, staging, or dev (got: $FLAVOR)" >&2
+    usage
+    ;;
+esac
+
+case "$MODE" in
+  read)
+    SUFFIX="reports-0"
+    ACCESS_LEVEL="read"
+    ;;
+  write)
+    SUFFIX="primary"
+    ACCESS_LEVEL="readwrite"
+    ;;
+  *)
+    echo "error: mode must be read or write (got: $MODE)" >&2
+    usage
+    ;;
+esac
+
+exec infra db proxy "${FLAVOR}-app-oauth-credential-20250128-${SUFFIX}" \
+  --db-type mysql \
+  --access-level "$ACCESS_LEVEL" \
+  --flavor "$FLAVOR"
