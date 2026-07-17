@@ -1,2 +1,4 @@
 #!/bin/sh
-cursor "$(fd | fzf)"
+file="$(fd | fzf)" || exit $?
+[ -n "$file" ] || exit 0
+cursor "$file"
