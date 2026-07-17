@@ -1,2 +1,2 @@
 #!/bin/sh
-c "$(fd | fzf)"
+cursor "$(fd | fzf)"
