@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Call start with app_sandbox_editor added to the -e list
-env="${1:-staging}"
+env="${1:-prod}"
 [[ $# -ge 1 ]] && shift
-# Default to editor as page when nothing provided
-pages=("${@:-editor}")
+# Default to home as page when nothing provided
+pages=("${@:-home}")
 export MULTI_COMPILER=true
 ff c start "$env" app_sandbox_editor "${pages[@]}"

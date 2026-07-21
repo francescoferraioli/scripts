@@ -12,11 +12,11 @@ while [[ "${1:-}" == "no-sm" || "${1:-}" == "sm" || "${1:-}" == "t" ]]; do
   shift
 done
 
-env="${1:-staging}"
+env="${1:-prod}"
 [[ $# -ge 1 ]] && shift
 
-# Build -e args from remaining params (default to editor if none)
-extra_es=("${@:-editor}")
+# Build -e args from remaining params (default to home if none)
+extra_es=("${@:-home}")
 
 editor_included=false
 for e in "${extra_es[@]}"; do
