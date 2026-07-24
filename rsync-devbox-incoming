@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+# Pull markdown drop files from frankief's named Coder workspaces (totti, pirlo).
+# SSH hosts are coder.frankief/<name> (see ff devbox run); rsync cannot use a
+# hostname that contains '/', so short names are used with an ssh wrapper.
+#
+# Usage:
+#   rsync-devbox-incoming            # sync both (ff devbox all)
+#   rsync-devbox-incoming totti      # sync one
+#   rsync-devbox-incoming totti pirlo
+#
+# Env:
+#   LOCAL_INCOMING   default: ~/incoming
+#   REMOTE_INCOMING  default: incoming  (relative to remote home)
+set -euo pipefail
+
+SCRIPT_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
+
+# Internal: rsync -e invokes this as: rsync-devbox-incoming --ssh <host> <args...>
+if [[ "${1:-}" == "--ssh" ]]; then
+  shift
+  host=${1##*@}
+  shift
+  exec ssh \
+    -o BatchMode=yes \
+    -o ConnectTimeout=30 \
+    -o ClearAllForwardings=yes \
+    -o PermitLocalCommand=no \
+    "coder.frankief/${host}" \
+    "$@"
+fi
+
+LOCAL_INCOMING="${LOCAL_INCOMING:-$HOME/incoming}"
+REMOTE_INCOMING="${REMOTE_INCOMING:-incoming}"
+RSYNC_BIN="${RSYNC_BIN:-$(command -v /opt/homebrew/bin/rsync || command -v rsync)}"
+DEVBOXES=("$@")
+
+if [[ ${#DEVBOXES[@]} -eq 0 ]]; then
+  read -r -a DEVBOXES <<< "$(ff devbox all)"
+fi
+
+mkdir -p "$LOCAL_INCOMING"
+
+sync_one() {
+  local name=$1
+  local dest="${LOCAL_INCOMING}/${name}"
+
+  mkdir -p "$dest"
+
+  echo "==> ${name} (coder.frankief/${name}:${REMOTE_INCOMING}/ -> ${dest}/)"
+  # Only transfer .md files (and dirs needed to reach them). Remove from remote after copy.
+  "$RSYNC_BIN" -av \
+    --include='*/' \
+    --include='*.md' \
+    --exclude='*' \
+    --remove-source-files \
+    -e "${SCRIPT_PATH} --ssh" \
+    "${name}:${REMOTE_INCOMING}/" \
+    "${dest}/"
+}
+
+status=0
+for name in "${DEVBOXES[@]}"; do
+  if ! sync_one "$name"; then
+    echo "error: failed syncing ${name}" >&2
+    status=1
+  fi
+done
+
+exit "$status"
