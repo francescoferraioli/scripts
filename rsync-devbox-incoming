@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Pull markdown drop files from frankief's named Coder workspaces (totti, pirlo).
+# Pull markdown drop files from frankief's named Coder workspaces (totti, pirlo, maldini).
 # SSH hosts are coder.frankief/<name> (see ff devbox run); rsync cannot use a
 # hostname that contains '/', so short names are used with an ssh wrapper.
 #
 # Usage:
-#   rsync-devbox-incoming            # sync both (ff devbox all)
+#   rsync-devbox-incoming            # sync all (ff devbox all)
 #   rsync-devbox-incoming totti      # sync one
-#   rsync-devbox-incoming totti pirlo
+#   rsync-devbox-incoming totti pirlo maldini
 #
 # Env:
 #   LOCAL_INCOMING   default: ~/incoming
