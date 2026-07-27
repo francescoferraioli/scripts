@@ -6,7 +6,8 @@ command -v taz >/dev/null 2>&1 || { echo "canva-taz-fmt: taz not on PATH" >&2; e
 
 staged_list="$(mktemp)"
 unstaged_list="$(mktemp)"
-trap 'rm -f "$staged_list" "$unstaged_list"' EXIT
+restage_list="$(mktemp)"
+trap 'rm -f "$staged_list" "$unstaged_list" "$restage_list"' EXIT
 
 git diff --cached --name-only | sort > "$staged_list"
 git diff --name-only | sort > "$unstaged_list"
@@ -31,4 +32,19 @@ if [ ! -s "$staged_list" ]; then
   exit 0
 fi
 
-git add --pathspec-from-file="$staged_list"
+# Staged deletions still appear in --name-only, but git add rejects those
+# paths (gone from worktree and index). Fmt cannot touch them anyway, so
+# only restage paths that still exist.
+while IFS= read -r file; do
+  [ -z "$file" ] && continue
+  # -e misses broken symlinks; -L keeps those restageable if present.
+  if [ -e "$file" ] || [ -L "$file" ]; then
+    printf '%s\n' "$file" >> "$restage_list"
+  fi
+done < "$staged_list"
+
+if [ ! -s "$restage_list" ]; then
+  exit 0
+fi
+
+git add --pathspec-from-file="$restage_list"
