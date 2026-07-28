@@ -7,7 +7,8 @@
 # On Maldini (coder.frankief/maldini):
 #   - Worktree path: ~/work/<sanitized-branch> (sibling of ~/work/canva)
 #   - If the branch is checked out in some other worktree, exit with an error
-#   - If the named worktree is missing, create it (local branch, or track origin)
+#   - If the named worktree is missing, create it (local branch, track origin,
+#     or create a new branch from origin/master)
 #   - Create or attach a tmux session named like the sanitized branch, cwd = worktree
 set -euo pipefail
 
@@ -108,9 +109,13 @@ else
   elif git show-ref --verify --quiet "refs/remotes/origin/\$BRANCH"; then
     git worktree add -b "\$BRANCH" "\$WORKTREE" "origin/\$BRANCH"
   else
-    echo "error: branch '\$BRANCH' not found locally or as origin/\$BRANCH" >&2
-    echo "fetch it on Maldini first, then retry" >&2
-    exit 1
+    echo "branch '\$BRANCH' not found; creating from origin/master..."
+    git fetch --quiet origin master 2>/dev/null || true
+    if ! git show-ref --verify --quiet "refs/remotes/origin/master"; then
+      echo "error: origin/master not found; cannot create branch '\$BRANCH'" >&2
+      exit 1
+    fi
+    git worktree add -b "\$BRANCH" "\$WORKTREE" "origin/master"
   fi
 fi
 
