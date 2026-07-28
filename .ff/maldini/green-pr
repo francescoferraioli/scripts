@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# Open a Maldini worktree for a PR and start Claude with green-pr.
+#
+# Usage:
+#   ff maldini green-pr <pr-url>
+#
+# Examples:
+#   ff maldini green-pr https://github.com/canva/canva/pull/12345
+#
+# Passes the same URL through to `ff maldini go` (which resolves it to the
+# head branch). Bare PR numbers are not accepted; use the full GitHub URL.
+set -euo pipefail
+
+# shellcheck source=/dev/null
+source "${FF_SCRIPT_HOME}/.lib/github-pr.sh"
+
+usage() {
+  echo "usage: ff maldini green-pr <pr-url>" >&2
+  exit 1
+}
+
+[[ $# -eq 1 ]] || usage
+[[ -n "$1" ]] || usage
+is_github_pr_url "$1" || usage
+
+pr_url=$1
+
+exec ff maldini go "$pr_url" -- ff c c "Please green-pr $pr_url"
