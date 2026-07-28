@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# Open a Maldini worktree for a PR and start Claude with green-pr.
+#
+# Usage:
+#   ff c green <pr>
+#
+# Examples:
+#   ff c green 12345
+#   ff c green https://github.com/owner/repo/pull/12345
+set -euo pipefail
+
+usage() {
+  echo "usage: ff c green <pr>" >&2
+  exit 1
+}
+
+[[ $# -eq 1 ]] || usage
+[[ -n "$1" ]] || usage
+
+pr=$1
+branch=$(ff gh branch "$pr")
+url=$(gh pr view "$pr" --json url -q .url)
+
+exec ff maldini go "$branch" -- ff c c "Please green-pr $url"
