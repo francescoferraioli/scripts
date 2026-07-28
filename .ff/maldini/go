@@ -2,7 +2,11 @@
 # Drop into a Maldini canva worktree + tmux session for a branch.
 #
 # Usage:
-#   ff maldini go <branch> [-- <command...>]
+#   ff maldini go <branch-or-pr-url> [-- <command...>]
+#
+# <branch-or-pr-url> may be a git branch name, or a GitHub PR URL
+# (https://github.com/owner/repo/pull/n). PR URLs are resolved to the PR head
+# branch via `ff gh branch` before the worktree/tmux setup.
 #
 # On Maldini (coder.frankief/maldini):
 #   - Worktree path: ~/work/<sanitized-branch> (sibling of ~/work/canva)
@@ -13,18 +17,31 @@
 #   - If -- <command...> is given, type that command into the session before attach
 set -euo pipefail
 
+# shellcheck source=/dev/null
+source "${FF_SCRIPT_HOME}/.lib/github-pr.sh"
+
 DEVBOX=maldini
 
 usage() {
-  echo "usage: ff maldini go <branch> [-- <command...>]" >&2
+  echo "usage: ff maldini go <branch-or-pr-url> [-- <command...>]" >&2
   exit 1
 }
 
 [[ $# -ge 1 ]] || usage
 [[ -n "$1" ]] || usage
 
-branch=$1
+target=$1
 shift
+
+if is_github_pr_url "$target"; then
+  branch=$(ff gh branch "$target")
+  if [[ -z "$branch" ]]; then
+    echo "error: could not resolve PR head branch for: ${target}" >&2
+    exit 1
+  fi
+else
+  branch=$target
+fi
 
 cmd=()
 if [[ $# -gt 0 ]]; then
