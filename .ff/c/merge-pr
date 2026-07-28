@@ -2,15 +2,15 @@
 # Open a Maldini worktree for a PR and start Claude with merge-pr.
 #
 # Usage:
-#   ff c merge <pr>
+#   ff c merge-pr <pr>
 #
 # Examples:
-#   ff c merge 12345
-#   ff c merge https://github.com/owner/repo/pull/12345
+#   ff c merge-pr 12345
+#   ff c merge-pr https://github.com/owner/repo/pull/12345
 set -euo pipefail
 
 usage() {
-  echo "usage: ff c merge <pr>" >&2
+  echo "usage: ff c merge-pr <pr>" >&2
   exit 1
 }
 
