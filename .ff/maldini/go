@@ -2,7 +2,7 @@
 # Drop into a Maldini canva worktree + tmux session for a branch.
 #
 # Usage:
-#   ff maldini go <branch>
+#   ff maldini go <branch> [-- <command...>]
 #
 # On Maldini (coder.frankief/maldini):
 #   - Worktree path: ~/work/<sanitized-branch> (sibling of ~/work/canva)
@@ -10,19 +10,29 @@
 #   - If the named worktree is missing, create it (local branch, track origin,
 #     or create a new branch from origin/master)
 #   - Create or attach a tmux session named like the sanitized branch, cwd = worktree
+#   - If -- <command...> is given, type that command into the session before attach
 set -euo pipefail
 
 DEVBOX=maldini
 
 usage() {
-  echo "usage: ff maldini go <branch>" >&2
+  echo "usage: ff maldini go <branch> [-- <command...>]" >&2
   exit 1
 }
 
-[[ $# -eq 1 ]] || usage
+[[ $# -ge 1 ]] || usage
 [[ -n "$1" ]] || usage
 
 branch=$1
+shift
+
+cmd=()
+if [[ $# -gt 0 ]]; then
+  [[ "$1" == "--" ]] || usage
+  shift
+  [[ $# -gt 0 ]] || usage
+  cmd=("$@")
+fi
 
 sanitize() {
   # Filesystem + tmux-safe name derived from the branch.
@@ -53,12 +63,19 @@ case "$name" in
     ;;
 esac
 
+cmd_line=
+if [[ ${#cmd[@]} -gt 0 ]]; then
+  cmd_line=$(printf '%q ' "${cmd[@]}")
+  cmd_line=${cmd_line% }
+fi
+
 remote_script=$(
   cat <<EOF
 set -euo pipefail
 
 BRANCH=$(printf '%q' "$branch")
 NAME=$(printf '%q' "$name")
+CMD_LINE=$(printf '%q' "$cmd_line")
 MAIN_REPO="\$HOME/work/canva"
 WORKTREE="\$HOME/work/\$NAME"
 
@@ -122,11 +139,18 @@ fi
 # Exact session name match (leading =).
 if tmux has-session -t "=\$NAME" 2>/dev/null; then
   echo "attaching to tmux session \$NAME (cwd should be \$WORKTREE)"
-  exec tmux attach-session -t "=\$NAME"
+else
+  echo "starting tmux session \$NAME in \$WORKTREE"
+  tmux new-session -d -s "\$NAME" -c "\$WORKTREE"
+  # Let the login shell finish starting before send-keys.
+  sleep 0.3
 fi
 
-echo "starting tmux session \$NAME in \$WORKTREE"
-exec tmux new-session -s "\$NAME" -c "\$WORKTREE"
+if [[ -n "\$CMD_LINE" ]]; then
+  tmux send-keys -t "=\$NAME" "\$CMD_LINE" Enter
+fi
+
+exec tmux attach-session -t "=\$NAME"
 EOF
 )
 

@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# Open a Maldini worktree for a PR and start Claude with merge-pr.
+#
+# Usage:
+#   ff c merge <pr>
+#
+# Examples:
+#   ff c merge 12345
+#   ff c merge https://github.com/owner/repo/pull/12345
+set -euo pipefail
+
+usage() {
+  echo "usage: ff c merge <pr>" >&2
+  exit 1
+}
+
+[[ $# -eq 1 ]] || usage
+[[ -n "$1" ]] || usage
+
+pr=$1
+branch=$(ff gh branch "$pr")
+url=$(gh pr view "$pr" --json url -q .url)
+
+exec ff maldini go "$branch" -- ff c c "Please merge-pr $url"
