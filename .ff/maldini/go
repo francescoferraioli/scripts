@@ -164,7 +164,9 @@ else
 fi
 
 if [[ -n "\$CMD_LINE" ]]; then
-  tmux send-keys -t "=\$NAME" "\$CMD_LINE" Enter
+  # send-keys takes a pane target; trailing : means "active pane in this session".
+  # Bare "=\$NAME" is treated as a pane name literally starting with =, which fails.
+  tmux send-keys -t "=\$NAME:" "\$CMD_LINE" Enter
 fi
 
 exec tmux attach-session -t "=\$NAME"
