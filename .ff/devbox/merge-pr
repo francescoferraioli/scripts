@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# Open a canva worktree for a PR and start Claude with merge-pr.
+#
+# Usage:
+#   ff devbox merge-pr <pr-url>
+#
+# Examples:
+#   ff devbox merge-pr https://github.com/canva/canva/pull/12345
+#
+# Passes the same URL through to `ff devbox go` (which resolves it to the
+# head branch and picks the box that already has it, else maldini). Bare PR
+# numbers are not accepted; use the full GitHub URL.
+set -euo pipefail
+
+# shellcheck source=/dev/null
+source "${FF_SCRIPT_HOME}/.lib/github-pr.sh"
+
+usage() {
+  echo "usage: ff devbox merge-pr <pr-url>" >&2
+  exit 1
+}
+
+[[ $# -eq 1 ]] || usage
+[[ -n "$1" ]] || usage
+is_github_pr_url "$1" || usage
+
+pr_url=$1
+
+exec ff devbox go "$pr_url" -- ff c c "Please merge-pr $pr_url"
