@@ -13,8 +13,8 @@
 #   - Otherwise default to maldini and create ~/work/<sanitized-branch> if needed
 #
 # On the chosen box:
-#   - Create or attach a tmux session named like the sanitized branch, cwd = worktree
-#   - If -- <command...> is given, type that command into the session before attach
+#   - Ensure the worktree exists
+#   - Hand off to `ff devbox attach --local` for the tmux session (optional command)
 set -euo pipefail
 
 # shellcheck source=/dev/null
@@ -105,19 +105,20 @@ if [[ -z "$existing_worktree" ]]; then
   echo "no existing checkout found; using ${devbox}" >&2
 fi
 
-cmd_line=
+# Quoted suffix for `ff devbox attach --local "$NAME" "$WORKTREE"[ -- cmd...]`
+attach_suffix=
 if [[ ${#cmd[@]} -gt 0 ]]; then
-  cmd_line=$(printf '%q ' "${cmd[@]}")
-  cmd_line=${cmd_line% }
+  attach_suffix=$(printf ' %q' -- "${cmd[@]}")
 fi
 
 remote_script=$(
   cat <<EOF
 set -euo pipefail
 
+export PATH="\$HOME/scripts:\$PATH"
+
 BRANCH=$(printf '%q' "$branch")
 NAME=$(printf '%q' "$name")
-CMD_LINE=$(printf '%q' "$cmd_line")
 EXISTING_WORKTREE=$(printf '%q' "$existing_worktree")
 MAIN_REPO="\$HOME/work/canva"
 
@@ -197,23 +198,7 @@ else
   fi
 fi
 
-# Exact session name match (leading =).
-if tmux has-session -t "=\$NAME" 2>/dev/null; then
-  echo "attaching to tmux session \$NAME (cwd should be \$WORKTREE)"
-else
-  echo "starting tmux session \$NAME in \$WORKTREE"
-  tmux new-session -d -s "\$NAME" -c "\$WORKTREE"
-  # Let the login shell finish starting before send-keys.
-  sleep 1.5
-fi
-
-if [[ -n "\$CMD_LINE" ]]; then
-  # send-keys takes a pane target; trailing : means "active pane in this session".
-  # Bare "=\$NAME" is treated as a pane name literally starting with =, which fails.
-  tmux send-keys -t "=\$NAME:" "\$CMD_LINE" Enter
-fi
-
-exec tmux attach-session -t "=\$NAME"
+exec ff devbox attach --local "\$NAME" "\$WORKTREE"${attach_suffix}
 EOF
 )
 

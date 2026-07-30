@@ -1,0 +1,109 @@
+#!/usr/bin/env bash
+# Create or attach a tmux session in a cwd on a Coder devbox (or here).
+#
+# Usage:
+#   ff devbox attach <devbox> <session-name> <remote-cwd> [-- <command...>]
+#   ff devbox attach --local <session-name> <cwd> [-- <command...>]
+#
+# <remote-cwd> / <cwd> is the working directory for the tmux session (must
+# already exist). Optional command is typed into the pane via send-keys
+# before attach.
+#
+# --local skips SSH; run on the box itself (used by `ff devbox go` after
+# worktree setup in the same remote shell).
+set -euo pipefail
+
+usage() {
+  echo "usage: ff devbox attach <devbox> <session-name> <remote-cwd> [-- <command...>]" >&2
+  echo "       ff devbox attach --local <session-name> <cwd> [-- <command...>]" >&2
+  exit 1
+}
+
+[[ $# -ge 1 ]] || usage
+
+local_mode=0
+if [[ "$1" == "--local" ]]; then
+  local_mode=1
+  shift
+fi
+
+[[ $# -ge 2 ]] || usage
+[[ -n "$1" && -n "$2" ]] || usage
+
+if [[ "$local_mode" -eq 1 ]]; then
+  session=$1
+  cwd=$2
+  shift 2
+else
+  [[ $# -ge 3 ]] || usage
+  [[ -n "$3" ]] || usage
+  devbox=$1
+  session=$2
+  cwd=$3
+  shift 3
+fi
+
+cmd=()
+if [[ $# -gt 0 ]]; then
+  [[ "$1" == "--" ]] || usage
+  shift
+  [[ $# -gt 0 ]] || usage
+  cmd=("$@")
+fi
+
+run_tmux() {
+  local name=$1
+  local worktree=$2
+  shift 2
+  local -a pane_cmd=("$@")
+
+  if [[ ! -d "$worktree" ]]; then
+    echo "error: cwd does not exist: $worktree" >&2
+    exit 1
+  fi
+
+  # Exact session name match (leading =).
+  if tmux has-session -t "=$name" 2>/dev/null; then
+    echo "attaching to tmux session $name (cwd should be $worktree)"
+  else
+    echo "starting tmux session $name in $worktree"
+    tmux new-session -d -s "$name" -c "$worktree"
+    # Let the login shell finish starting before send-keys.
+    sleep 1.5
+  fi
+
+  if [[ ${#pane_cmd[@]} -gt 0 ]]; then
+    local cmd_line
+    cmd_line=$(printf '%q ' "${pane_cmd[@]}")
+    cmd_line=${cmd_line% }
+    # send-keys takes a pane target; trailing : means "active pane in this session".
+    # Bare "=$name" is treated as a pane name literally starting with =, which fails.
+    tmux send-keys -t "=$name:" "$cmd_line" Enter
+  fi
+
+  exec tmux attach-session -t "=$name"
+}
+
+if [[ "$local_mode" -eq 1 ]]; then
+  run_tmux "$session" "$cwd" "${cmd[@]}"
+else
+  # Build `ff devbox attach --local …` argv on this side so the remote just execs it.
+  remote_attach=$(printf '%q ' ff devbox attach --local "$session" "$cwd")
+  if [[ ${#cmd[@]} -gt 0 ]]; then
+    remote_attach+=$(printf '%q ' -- "${cmd[@]}")
+  fi
+  remote_attach=${remote_attach% }
+
+  remote_script=$(
+    cat <<EOF
+set -euo pipefail
+export PATH="\$HOME/scripts:\$PATH"
+exec ${remote_attach}
+EOF
+  )
+
+  exec ssh -t \
+    -o ConnectTimeout=30 \
+    "coder.frankief/${devbox}" \
+    bash -lc "$(printf '%q' "$remote_script")"
+fi
