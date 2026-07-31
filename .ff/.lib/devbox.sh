@@ -23,6 +23,13 @@ _devbox_is_known_name() {
   return 1
 }
 
+_devbox_reexec() {
+  local script=$1
+  shift
+  echo "ff devbox $(basename "$script") $*" >&2
+  exec bash "$script" "$@"
+}
+
 # Usage: devbox_prepend_if_omitted "$0" "$@"
 # Re-execs with the sole devbox when args are omitted or $1 is not a devbox name.
 devbox_prepend_if_omitted() {
@@ -36,10 +43,10 @@ devbox_prepend_if_omitted() {
   local sole="${all_devboxes[0]}"
 
   if [[ $# -eq 0 ]]; then
-    exec bash "$script" "$sole"
+    _devbox_reexec "$script" "$sole"
   fi
 
   _devbox_is_known_name "$1" "${all_devboxes[@]}" && return 0
 
-  exec bash "$script" "$sole" "$@"
+  _devbox_reexec "$script" "$sole" "$@"
 }
