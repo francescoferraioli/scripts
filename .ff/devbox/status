@@ -1,0 +1,117 @@
+#!/usr/bin/env bash
+# Show Coder workspace status for one or more devboxes.
+#
+# Usage:
+#   ff devbox status [devbox...]
+#   ff devbox status --all
+#
+# With no devbox names, shows workspaces from `ff devbox all`.
+# --all lists every workspace owned by you in Coder.
+set -euo pipefail
+
+show_all=false
+devboxes=()
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --all)
+      show_all=true
+      shift
+      ;;
+    -h | --help)
+      cat <<EOF
+usage: ff devbox status [devbox...]
+       ff devbox status --all
+
+Show Coder workspace status. Default devboxes: $(ff devbox all).
+
+Options:
+  --all   List every Coder workspace you own (not just ff devbox all)
+EOF
+      exit 0
+      ;;
+    *)
+      devboxes+=("$1")
+      shift
+      ;;
+  esac
+done
+
+if ! command -v coder >/dev/null 2>&1; then
+  echo "error: coder CLI not found; install Coder CLI and run 'coder login'" >&2
+  exit 1
+fi
+
+if [[ "$show_all" == true && ${#devboxes[@]} -gt 0 ]]; then
+  echo "error: pass devbox names or --all, not both" >&2
+  exit 1
+fi
+
+if [[ "$show_all" != true && ${#devboxes[@]} -eq 0 ]]; then
+  read -r -a devboxes <<< "$(ff devbox all)"
+fi
+
+CODER_JSON=$(coder list -o json --search 'owner:me')
+export CODER_JSON
+export SHOW_ALL="$show_all"
+export DEVBOX_NAMES="${devboxes[*]}"
+
+python3 <<'PY'
+import json
+import os
+import sys
+
+show_all = os.environ.get("SHOW_ALL") == "true"
+names = set(filter(None, os.environ.get("DEVBOX_NAMES", "").split()))
+
+workspaces = json.loads(os.environ["CODER_JSON"])
+if not show_all:
+    workspaces = [w for w in workspaces if w["name"] in names]
+    missing = sorted(names - {w["name"] for w in workspaces})
+    if missing:
+        for name in missing:
+            print(f"{name}: not found in Coder", file=sys.stderr)
+        if not workspaces:
+            sys.exit(1)
+
+workspaces.sort(key=lambda w: w["name"])
+
+if not workspaces:
+    print("no matching workspaces")
+    sys.exit(0)
+
+rows = []
+for w in workspaces:
+    build = w.get("latest_build") or {}
+    status = build.get("status") or "unknown"
+    transition = build.get("transition") or ""
+    healthy = "yes" if w.get("health", {}).get("healthy") else "no"
+    template = w.get("template_name") or ""
+    rows.append((w["name"], status, transition, healthy, template))
+
+widths = [
+    max(len("DEVBOX"), *(len(r[0]) for r in rows)),
+    max(len("STATUS"), *(len(r[1]) for r in rows)),
+    max(len("TRANSITION"), *(len(r[2]) for r in rows)),
+    max(len("HEALTHY"), *(len(r[3]) for r in rows)),
+    max(len("TEMPLATE"), *(len(r[4]) for r in rows)),
+]
+
+header = (
+    f"{'DEVBOX':<{widths[0]}}  "
+    f"{'STATUS':<{widths[1]}}  "
+    f"{'TRANSITION':<{widths[2]}}  "
+    f"{'HEALTHY':<{widths[3]}}  "
+    f"{'TEMPLATE':<{widths[4]}}"
+)
+print(header)
+print("-" * len(header))
+for row in rows:
+    print(
+        f"{row[0]:<{widths[0]}}  "
+        f"{row[1]:<{widths[1]}}  "
+        f"{row[2]:<{widths[2]}}  "
+        f"{row[3]:<{widths[3]}}  "
+        f"{row[4]:<{widths[4]}}"
+    )
+PY
