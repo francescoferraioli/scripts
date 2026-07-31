@@ -36,10 +36,10 @@ devbox_prepend_if_omitted() {
   local sole="${all_devboxes[0]}"
 
   if [[ $# -eq 0 ]]; then
-    exec "$script" "$sole"
+    exec bash "$script" "$sole"
   fi
 
   _devbox_is_known_name "$1" "${all_devboxes[@]}" && return 0
 
-  exec "$script" "$sole" "$@"
+  exec bash "$script" "$sole" "$@"
 }
