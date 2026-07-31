@@ -1,2 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck source=/dev/null
+source "${FF_SCRIPT_HOME}/.lib/devbox.sh"
+devbox_prepend_if_omitted "$0" "$@"
 ssh "coder.frankief/$1"

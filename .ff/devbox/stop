@@ -5,6 +5,10 @@
 #   ff devbox stop <devbox>|all [<devbox>|all...]
 set -euo pipefail
 
+# shellcheck source=/dev/null
+source "${FF_SCRIPT_HOME}/.lib/devbox.sh"
+devbox_prepend_if_omitted "$0" "$@"
+
 usage() {
   echo "usage: ff devbox stop <devbox>|all [<devbox>|all...]" >&2
   exit 1

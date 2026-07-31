@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+# shellcheck source=/dev/null
+source "${FF_SCRIPT_HOME}/.lib/devbox.sh"
+devbox_prepend_if_omitted "$0" "$@"
+
 command=cursor
 canva_number=
 repo=

@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# shellcheck source=/dev/null
+source "${FF_SCRIPT_HOME}/.lib/devbox.sh"
+devbox_prepend_if_omitted "$0" "$@"
+
 if [[ $# -eq 0 ]]; then
   echo "usage: ff devbox ff <devbox> [<devbox>...] -- <ff-object> [<ff-action> [<ff-args...>]]" >&2
   exit 1

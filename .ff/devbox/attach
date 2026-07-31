@@ -13,6 +13,12 @@
 # worktree setup in the same remote shell).
 set -euo pipefail
 
+if [[ "${1:-}" != "--local" ]]; then
+  # shellcheck source=/dev/null
+  source "${FF_SCRIPT_HOME}/.lib/devbox.sh"
+  devbox_prepend_if_omitted "$0" "$@"
+fi
+
 usage() {
   echo "usage: ff devbox attach <devbox> <session-name> <remote-cwd> [-- <command...>]" >&2
   echo "       ff devbox attach --local <session-name> <cwd> [-- <command...>]" >&2
