@@ -9,14 +9,14 @@
 #
 # merge-pr only retries Buildkite jobs and posts bot comments; it never
 # commits. Skip `ff devbox go` (branch resolve, where scan, worktree create)
-# and attach a PR-scoped tmux session in ~/work/canva on maldini.
+# and attach a PR-scoped tmux session in ~/work/canva on totti.
 # Bare PR numbers are not accepted; use the full GitHub URL.
 set -euo pipefail
 
 # shellcheck source=/dev/null
 source "${FF_SCRIPT_HOME}/.lib/github-pr.sh"
 
-DEFAULT_DEVBOX=maldini
+DEFAULT_DEVBOX=totti
 
 usage() {
   echo "usage: ff devbox merge-pr <pr-url>" >&2
