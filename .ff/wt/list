@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# List git worktrees for the current repository.
+#
+# Usage:
+#   ff wt list
+set -euo pipefail
+
+# shellcheck source=/dev/null
+source "${FF_SCRIPT_HOME}/.lib/wt.sh"
+
+wt_ensure_git_repo
+git worktree list

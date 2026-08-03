@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# Interactively pick a git worktree and print its path.
+#
+# Usage:
+#   ff wt fzf
+set -euo pipefail
+
+# shellcheck source=/dev/null
+source "${FF_SCRIPT_HOME}/.lib/wt.sh"
+
+wt_pick

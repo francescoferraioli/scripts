@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# Remove a git worktree.
+#
+# Usage:
+#   ff wt remove [--force] [worktree-path]
+#
+# With no path, opens the worktree picker (ff wt fzf).
+set -euo pipefail
+
+# shellcheck source=/dev/null
+source "${FF_SCRIPT_HOME}/.lib/wt.sh"
+
+force=false
+path=
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -f | --force)
+      force=true
+      shift
+      ;;
+    -h | --help)
+      cat <<EOF
+usage: ff wt remove [--force] [worktree-path]
+
+Remove a git worktree. With no path, opens ff wt fzf.
+
+Options:
+  -f, --force   Remove even if worktree has modified or untracked files
+EOF
+      exit 0
+      ;;
+    *)
+      path=$1
+      shift
+      ;;
+  esac
+done
+
+path=$(wt_resolve_path "$path") || exit 1
+
+if [[ "$force" == true ]]; then
+  git worktree remove --force "$path"
+else
+  git worktree remove "$path"
+fi
