@@ -27,23 +27,33 @@ wt_pick() {
   local selection
   selection=$(
     git worktree list --porcelain | awk '
-      BEGIN { path = "" }
-      /^worktree / { path = $2 }
+      BEGIN { path = ""; folder = "" }
+      /^worktree / {
+        path = $2
+        folder = path
+        sub(".*/", "", folder)
+      }
       /^branch / {
         branch = $2
         sub(/^refs\/heads\//, "", branch)
-        printf "%s\t%s\n", path, branch
+        printf "%s\t%-28s\t%s\n", path, folder, branch
         path = ""
+        folder = ""
       }
       /^detached/ {
-        printf "%s\t(detached)\n", path
+        printf "%s\t%-28s\t%s\n", path, folder, "(detached)"
         path = ""
+        folder = ""
       }
     ' | fzf \
       --delimiter=$'\t' \
-      --with-nth=2,1 \
+      --with-nth=2,3 \
       --accept-nth=1 \
-      --prompt='worktree> '
+      --prompt='worktree> ' \
+      --header=$'FOLDER                        BRANCH' \
+      --preview='printf "%s" {1}' \
+      --preview-window='down:1:wrap' \
+      --height=~40%
   ) || return 1
 
   [[ -n "$selection" ]] || return 1
