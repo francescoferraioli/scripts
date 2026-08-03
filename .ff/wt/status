@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# Show status for every git worktree in the current repository.
+#
+# Usage:
+#   ff wt status
+set -euo pipefail
+
+# shellcheck source=/dev/null
+source "${FF_SCRIPT_HOME}/.lib/wt.sh"
+
+wt_ensure_git_repo
+
+printf '%-12s %-40s %s\n' "STATE" "BRANCH" "PATH"
+printf '%.0s-' {1..120}
+printf '\n'
+
+while IFS=$'\t' read -r path branch _; do
+  [[ -n "$path" ]] || continue
+
+  if [[ ! -d "$path" ]]; then
+    printf '%-12s %-40s %s\n' "missing" "${branch:-?}" "$path"
+    continue
+  fi
+
+  if [[ -z "$branch" || "$branch" == "(detached)" ]]; then
+    branch=$(git -C "$path" rev-parse --short HEAD 2>/dev/null || echo "?")
+    branch="(detached @ ${branch})"
+  fi
+
+  if git -C "$path" diff-index --quiet HEAD -- 2>/dev/null && \
+     [[ -z "$(git -C "$path" ls-files --others --exclude-standard 2>/dev/null)" ]]; then
+    state="clean"
+  else
+    state="dirty"
+  fi
+
+  upstream=$(git -C "$path" rev-parse --abbrev-ref '@{upstream}' 2>/dev/null || true)
+  if [[ -n "$upstream" ]]; then
+    read -r behind ahead <<< "$(
+      git -C "$path" rev-list --left-right --count HEAD...@{upstream} 2>/dev/null | tr '\t' ' '
+    )"
+    behind=${behind:-0}
+    ahead=${ahead:-0}
+    if [[ "$ahead" != "0" || "$behind" != "0" ]]; then
+      state="${state} +${ahead}/-${behind}"
+    fi
+  fi
+
+  printf '%-12s %-40s %s\n' "$state" "$branch" "$path"
+done < <(wt_list_entries)

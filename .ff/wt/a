@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+# Attach a tmux session for a git worktree.
+#
+# Usage:
+#   ff wt a [worktree-path] [-- <command...>]
+#
+# With no path, opens the worktree picker (ff wt fzf).
+# Session name matches ff devbox go (sanitized branch name).
+set -euo pipefail
+
+# shellcheck source=/dev/null
+source "${FF_SCRIPT_HOME}/.lib/wt.sh"
+
+path=
+cmd=()
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --)
+      shift
+      cmd=("$@")
+      break
+      ;;
+    -h | --help)
+      cat <<EOF
+usage: ff wt a [worktree-path] [-- <command...>]
+
+Create or attach a tmux session for a worktree. With no path, opens ff wt fzf.
+EOF
+      exit 0
+      ;;
+    *)
+      if [[ -z "$path" ]]; then
+        path=$1
+        shift
+      else
+        echo "error: unexpected argument: $1" >&2
+        exit 1
+      fi
+      ;;
+  esac
+done
+
+path=$(wt_resolve_path "$path") || exit 1
+
+if [[ ! -d "$path" ]]; then
+  echo "error: worktree path does not exist: $path" >&2
+  exit 1
+fi
+
+session=$(wt_session_for_path "$path")
+if [[ -z "$session" ]]; then
+  echo "error: could not derive tmux session name for: $path" >&2
+  exit 1
+fi
+
+if [[ ${#cmd[@]} -gt 0 ]]; then
+  exec ff devbox attach --local "$session" "$path" -- "${cmd[@]}"
+fi
+
+exec ff devbox attach --local "$session" "$path"

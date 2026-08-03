@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+# Interactively remove stale git worktrees.
+#
+# Usage:
+#   ff wt clean [--force]
+#
+# Lists worktrees whose upstream is gone or that are detached, then removes
+# the ones you pick. The main worktree is never offered.
+set -euo pipefail
+
+# shellcheck source=/dev/null
+source "${FF_SCRIPT_HOME}/.lib/wt.sh"
+
+force=false
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -f | --force)
+      force=true
+      shift
+      ;;
+    -h | --help)
+      cat <<EOF
+usage: ff wt clean [--force]
+
+Pick stale worktrees to remove (upstream gone or detached). Opens fzf multi-select.
+
+Options:
+  -f, --force   Pass --force to git worktree remove
+EOF
+      exit 0
+      ;;
+    *)
+      echo "error: unexpected argument: $1" >&2
+      exit 1
+      ;;
+  esac
+done
+
+if ! command -v fzf >/dev/null 2>&1; then
+  echo "error: fzf not found" >&2
+  exit 1
+fi
+
+main_path=$(wt_main_path)
+candidates=
+
+while IFS=$'\t' read -r path branch _; do
+  [[ -n "$path" ]] || continue
+  [[ "$path" == "$main_path" ]] && continue
+
+  reason=
+
+  if [[ "$branch" == "(detached)" ]]; then
+    reason="detached"
+  else
+    upstream=$(git -C "$path" rev-parse --abbrev-ref '@{upstream}' 2>/dev/null || true)
+    if [[ -n "$upstream" ]]; then
+      if git -C "$path" branch -vv | grep -q '\[gone\]'; then
+        reason="upstream gone"
+      fi
+    fi
+  fi
+
+  [[ -n "$reason" ]] || continue
+  candidates+="${path}"$'\t'"${branch}"$'\t'"${reason}"$'\n'
+done < <(wt_list_entries)
+
+if [[ -z "$candidates" ]]; then
+  echo "no stale worktrees found"
+  exit 0
+fi
+
+selection=$(
+  printf '%s' "$candidates" | fzf \
+    --delimiter=$'\t' \
+    --multi \
+    --with-nth=3,2,1 \
+    --accept-nth=1 \
+    --prompt='remove> ' \
+    --header='Tab to select worktrees to remove (upstream gone or detached)'
+) || exit 1
+
+if [[ -z "$selection" ]]; then
+  exit 0
+fi
+
+while IFS= read -r path; do
+  [[ -n "$path" ]] || continue
+  echo "removing $path"
+  if [[ "$force" == true ]]; then
+    git worktree remove --force "$path"
+  else
+    git worktree remove "$path"
+  fi
+done <<< "$selection"

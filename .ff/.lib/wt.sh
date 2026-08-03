@@ -61,3 +61,68 @@ wt_resolve_path() {
 
   wt_pick
 }
+
+# Filesystem + tmux-safe name derived from a branch or path label.
+wt_sanitize() {
+  local s=$1
+  s=${s//\//-}
+  s=${s//./-}
+  s=${s//[^a-zA-Z0-9_-]/-}
+  while [[ "$s" == *--* ]]; do
+    s=${s//--/-}
+  done
+  s=${s#-}
+  s=${s%-}
+  printf '%s' "$s"
+}
+
+# Print the main (first) worktree path for the current repository.
+wt_main_path() {
+  wt_ensure_git_repo || return 1
+  git worktree list --porcelain | awk '/^worktree / { print $2; exit }'
+}
+
+# Print branch name for a worktree path, or empty when detached.
+wt_branch_for_path() {
+  local path=$1
+  git -C "$path" branch --show-current 2>/dev/null || true
+}
+
+# Tmux session name for a worktree (matches ff devbox go naming).
+wt_session_for_path() {
+  local path=$1
+  local branch
+  branch=$(wt_branch_for_path "$path")
+  if [[ -n "$branch" ]]; then
+    wt_sanitize "$branch"
+  else
+    wt_sanitize "$(basename "$path")"
+  fi
+}
+
+# Print worktree rows as: path<TAB>branch<TAB>reason
+# reason is empty for normal rows; used by wt clean for stale entries.
+wt_list_entries() {
+  wt_ensure_git_repo || return 1
+
+  local main_path
+  main_path=$(wt_main_path)
+
+  local path branch
+  while IFS= read -r line || [[ -n "${line:-}" ]]; do
+    if [[ "$line" == worktree* ]]; then
+      path=${line#worktree }
+    elif [[ "$line" == branch* ]]; then
+      branch=${line#branch }
+      branch=${branch#refs/heads/}
+      printf '%s\t%s\t\n' "$path" "$branch"
+      path=
+      branch=
+    elif [[ "$line" == detached ]]; then
+      printf '%s\t(detached)\t\n' "$path"
+      path=
+    elif [[ -z "$line" && -n "${path:-}" ]]; then
+      path=
+    fi
+  done < <(git worktree list --porcelain)
+}

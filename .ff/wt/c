@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# Open a git worktree in Cursor.
+#
+# Usage:
+#   ff wt c [worktree-path]
+#
+# With no path, opens the worktree picker (ff wt fzf).
+set -euo pipefail
+
+# shellcheck source=/dev/null
+source "${FF_SCRIPT_HOME}/.lib/wt.sh"
+
+path=$(wt_resolve_path "${1:-}") || exit 1
+
+if [[ ! -d "$path" ]]; then
+  echo "error: worktree path does not exist: $path" >&2
+  exit 1
+fi
+
+exec cursor "$path"
