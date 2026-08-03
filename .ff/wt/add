@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# Add a git worktree as a sibling of the main checkout.
+#
+# Usage:
+#   ff wt add <folder> [branch]
+#
+# Creates ../<folder> next to the main repo directory (not inside it).
+# Branch defaults to frankief-<folder> when omitted.
+set -euo pipefail
+
+# shellcheck source=/dev/null
+source "${FF_SCRIPT_HOME}/.lib/wt.sh"
+
+folder=
+branch=
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -h | --help)
+      cat <<EOF
+usage: ff wt add <folder> [branch]
+
+Create a git worktree at a sibling path: ../<folder> relative to the main
+checkout. Branch defaults to frankief-<folder> when omitted.
+
+Examples:
+  ff wt add oauth-scopes
+  ff wt add oauth-work frankief-oauth-scopes
+EOF
+      exit 0
+      ;;
+    *)
+      if [[ -z "$folder" ]]; then
+        folder=$1
+      elif [[ -z "$branch" ]]; then
+        branch=$1
+      else
+        echo "error: unexpected argument: $1" >&2
+        exit 1
+      fi
+      shift
+      ;;
+  esac
+done
+
+if [[ -z "$folder" ]]; then
+  echo "error: folder name required" >&2
+  echo "usage: ff wt add <folder> [branch]" >&2
+  exit 1
+fi
+
+wt_add "$folder" "${branch:-}"

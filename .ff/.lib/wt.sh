@@ -92,6 +92,53 @@ wt_main_path() {
   git worktree list --porcelain | awk '/^worktree / { print $2; exit }'
 }
 
+# Print a sibling worktree path: parent-of-main/<folder>.
+wt_sibling_path() {
+  local folder=$1
+  local main_path
+  main_path=$(wt_main_path) || return 1
+  printf '%s/%s\n' "$(dirname "$main_path")" "$folder"
+}
+
+# Create a worktree at a sibling path. Branch defaults to folder name.
+wt_add() {
+  local folder=$1
+  local branch=${2:-frankief-$folder}
+
+  wt_ensure_git_repo || return 1
+
+  if [[ -z "$folder" || "$folder" == */* || "$folder" == "." || "$folder" == ".." ]]; then
+    echo "error: folder must be a single directory name" >&2
+    return 1
+  fi
+
+  local worktree_path
+  worktree_path=$(wt_sibling_path "$folder") || return 1
+
+  if [[ -e "$worktree_path" ]]; then
+    echo "error: path already exists: $worktree_path" >&2
+    return 1
+  fi
+
+  git fetch --quiet origin "$branch" 2>/dev/null || true
+
+  if git show-ref --verify --quiet "refs/heads/$branch"; then
+    git worktree add "$worktree_path" "$branch"
+  elif git show-ref --verify --quiet "refs/remotes/origin/$branch"; then
+    git worktree add -b "$branch" "$worktree_path" "origin/$branch"
+  else
+    echo "branch '$branch' not found; creating from origin/master..." >&2
+    git fetch --quiet origin master 2>/dev/null || true
+    if ! git show-ref --verify --quiet "refs/remotes/origin/master"; then
+      echo "error: origin/master not found; cannot create branch '$branch'" >&2
+      return 1
+    fi
+    git worktree add -b "$branch" "$worktree_path" "origin/master"
+  fi
+
+  printf '%s\n' "$worktree_path"
+}
+
 # Print branch name for a worktree path, or empty when detached.
 wt_branch_for_path() {
   local path=$1
