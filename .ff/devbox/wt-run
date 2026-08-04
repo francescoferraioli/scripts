@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# Run a command in every canva worktree on a devbox.
+#
+# Usage:
+#   ff devbox wt-run [devbox] -- <command...>
+set -euo pipefail
+
+# shellcheck source=/dev/null
+source "${FF_SCRIPT_HOME}/.lib/devbox.sh"
+
+devbox_prepend_if_omitted "$0" "$@"
+
+usage() {
+  echo "usage: ff devbox wt-run [devbox] -- <command...>" >&2
+  exit 1
+}
+
+[[ $# -ge 1 ]] || usage
+
+devbox=$1
+shift
+
+[[ $# -gt 0 && "$1" == "--" ]] || usage
+shift
+[[ $# -gt 0 ]] || usage
+
+quoted_cmd=$(printf ' %q' "$@")
+quoted_cmd=${quoted_cmd:1}
+
+ff devbox run-canva "$devbox" -- \
+  "source \"\$HOME/scripts/.ff/.lib/wt.sh\" && wt_run_each -- ${quoted_cmd}"

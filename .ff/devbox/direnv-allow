@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Run direnv allow in every canva worktree on a devbox.
+#
+# Usage:
+#   ff devbox direnv-allow [devbox]
+set -euo pipefail
+
+# shellcheck source=/dev/null
+source "${FF_SCRIPT_HOME}/.lib/devbox.sh"
+
+devbox_prepend_if_omitted "$0" "$@"
+
+if [[ $# -ne 1 ]]; then
+  echo "usage: ff devbox direnv-allow [devbox]" >&2
+  exit 1
+fi
+
+exec ff devbox wt-run "$1" -- direnv allow

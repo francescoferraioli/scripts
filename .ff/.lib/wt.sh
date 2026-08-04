@@ -203,3 +203,26 @@ wt_devbox_paths() {
     printf '%s\n' "$path"
   done <<< "$raw"
 }
+
+# Run a command in every worktree of the current repository.
+# Usage: wt_run_each -- command [args...]
+wt_run_each() {
+  [[ "${1:-}" == "--" ]] || {
+    echo "error: wt_run_each requires -- before command" >&2
+    return 1
+  }
+  shift
+  [[ $# -gt 0 ]] || {
+    echo "error: wt_run_each: missing command" >&2
+    return 1
+  }
+
+  wt_ensure_git_repo || return 1
+
+  local path branch
+  while IFS=$'\t' read -r path branch _; do
+    [[ -n "$path" ]] || continue
+    printf '>>> %s\n' "$path" >&2
+    (cd "$path" && "$@") || return 1
+  done < <(wt_list_entries)
+}
