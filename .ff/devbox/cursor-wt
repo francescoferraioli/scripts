@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+# Open remote Cursor on every canva worktree on a devbox.
+#
+# Usage:
+#   ff devbox cursor-wt [devbox]
+#
+# Lists worktrees via ff devbox run-canva, then runs ff devbox cursor once per
+# path. Waits between launches so Cursor can finish the remote server install
+# before opening the next window on the same host.
+set -euo pipefail
+
+# shellcheck source=/dev/null
+source "${FF_SCRIPT_HOME}/.lib/devbox.sh"
+# shellcheck source=/dev/null
+source "${FF_SCRIPT_HOME}/.lib/wt.sh"
+
+devbox_prepend_if_omitted "$0" "$@"
+
+if [[ $# -lt 1 ]]; then
+  echo "usage: ff devbox cursor-wt [devbox]" >&2
+  exit 1
+fi
+
+devbox=$1
+shift
+
+if [[ $# -gt 0 ]]; then
+  echo "error: unexpected argument(s): $*" >&2
+  echo "usage: ff devbox cursor-wt [devbox]" >&2
+  exit 1
+fi
+
+remote_work_base=/home/coder/work
+delay=${CURSOR_WT_DELAY:-8}
+paths=()
+
+while IFS= read -r path; do
+  [[ -n "$path" ]] || continue
+  paths+=("$path")
+done < <(wt_devbox_paths "$devbox")
+
+if [[ ${#paths[@]} -eq 0 ]]; then
+  echo "error: no worktrees to open" >&2
+  exit 1
+fi
+
+first=true
+for path in "${paths[@]}"; do
+  if [[ "$first" != true ]]; then
+    echo "waiting ${delay}s before next window..." >&2
+    sleep "$delay"
+  fi
+  first=false
+
+  if [[ "$path" == "$remote_work_base/"* ]]; then
+    repo=${path#"$remote_work_base/"}
+  else
+    repo=$(basename "$path")
+  fi
+
+  echo "opening repo:${repo}..." >&2
+  ff devbox cursor "$devbox" "repo:$repo" </dev/null
+done

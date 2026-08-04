@@ -20,4 +20,5 @@ done
 
 repo=${repo:-canva$canva_number}
 
+# shellcheck disable=SC2086
 $command --remote ssh-remote+coder-vscode.coder.canva-internal.com--frankief--$1.main /home/coder/work/$repo

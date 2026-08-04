@@ -183,3 +183,23 @@ wt_list_entries() {
     fi
   done < <(git worktree list --porcelain)
 }
+
+# Print remote canva worktree paths from a devbox, one per line.
+wt_devbox_paths() {
+  local devbox=$1
+  local raw line path branch
+
+  raw=$(
+    ff devbox run-canva "$devbox" -- \
+      'source "$HOME/scripts/.ff/.lib/wt.sh" && wt_list_entries'
+  ) || return 1
+
+  while IFS= read -r line || [[ -n "${line:-}" ]]; do
+    [[ -n "$line" ]] || continue
+    line=${line#*: }
+
+    IFS=$'\t' read -r path branch _ <<< "$line"
+    [[ -n "$path" ]] || continue
+    printf '%s\n' "$path"
+  done <<< "$raw"
+}
