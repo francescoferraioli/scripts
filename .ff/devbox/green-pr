@@ -8,7 +8,7 @@
 #   ff devbox green-pr https://github.com/canva/canva/pull/12345
 #
 # Passes the same URL through to `ff devbox go` (which resolves it to the
-# head branch and picks the box that already has it, else totti). Bare PR
+# head branch and picks the box that already has it, else maldini). Bare PR
 # numbers are not accepted; use the full GitHub URL.
 set -euo pipefail
 

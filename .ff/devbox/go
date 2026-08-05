@@ -10,7 +10,7 @@
 #
 # Picks the target with `ff devbox where`:
 #   - If the branch is already checked out on a devbox, use that box + worktree
-#   - Otherwise default to totti and create ~/work/<sanitized-branch> if needed
+#   - Otherwise default to maldini and create ~/work/<sanitized-branch> if needed
 #
 # On the chosen box:
 #   - Ensure the worktree exists
@@ -20,7 +20,7 @@ set -euo pipefail
 # shellcheck source=/dev/null
 source "${FF_SCRIPT_HOME}/.lib/github-pr.sh"
 
-DEFAULT_DEVBOX=totti
+DEFAULT_DEVBOX=maldini
 
 usage() {
   echo "usage: ff devbox go <branch-or-pr-url> [-- <command...>]" >&2
