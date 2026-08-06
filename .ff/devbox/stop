@@ -2,7 +2,7 @@
 # Stop one or more Coder devbox workspaces.
 #
 # Usage:
-#   ff devbox stop <devbox>|all [<devbox>|all...]
+#   ff devbox stop [--safe] <devbox>|all [<devbox>|all...]
 set -euo pipefail
 
 # shellcheck source=/dev/null
@@ -10,7 +10,7 @@ source "${FF_SCRIPT_HOME}/.lib/devbox.sh"
 devbox_prepend_if_omitted "$0" "$@"
 
 usage() {
-  echo "usage: ff devbox stop <devbox>|all [<devbox>|all...]" >&2
+  echo "usage: ff devbox stop [--safe] <devbox>|all [<devbox>|all...]" >&2
   exit 1
 }
 
@@ -21,19 +21,113 @@ if ! command -v coder >/dev/null 2>&1; then
   exit 1
 fi
 
+safe=false
 devboxes=()
 while [[ $# -gt 0 ]]; do
-  if [[ "$1" == "all" ]]; then
-    read -r -a all_devboxes <<< "$(ff devbox all)"
-    devboxes+=("${all_devboxes[@]}")
-  else
-    devboxes+=("$1")
-  fi
-  shift
+  case "$1" in
+    --safe)
+      safe=true
+      shift
+      ;;
+    all)
+      read -r -a all_devboxes <<< "$(ff devbox all)"
+      devboxes+=("${all_devboxes[@]}")
+      shift
+      ;;
+    -h | --help)
+      cat <<EOF
+usage: ff devbox stop [--safe] <devbox>|all [<devbox>|all...]
+
+Stop Coder devbox workspaces.
+
+Options:
+  --safe  Only stop devboxes that are running and have no active Claude sessions
+EOF
+      exit 0
+      ;;
+    *)
+      devboxes+=("$1")
+      shift
+      ;;
+  esac
 done
 
 if [[ ${#devboxes[@]} -eq 0 ]]; then
   usage
+fi
+
+resolve_ff_cmd() {
+  if command -v ff >/dev/null 2>&1; then
+    printf '%s\n' ff
+  elif [[ -x "${HOME}/scripts/ff" ]]; then
+    printf '%s\n' "${HOME}/scripts/ff"
+  else
+    return 1
+  fi
+}
+
+claude_agent_count() {
+  local devbox=$1
+  local ff_cmd
+  ff_cmd=$(resolve_ff_cmd) || return 2
+
+  local output
+  if ! output=$("${ff_cmd}" devbox run "$devbox" -- "${ff_cmd}" claude list 2>/dev/null); then
+    return 2
+  fi
+
+  local prefix="${devbox}: "
+  local json_payload=""
+  while IFS= read -r line || [[ -n "${line:-}" ]]; do
+    if [[ "$line" == "$prefix"* ]]; then
+      line="${line#"$prefix"}"
+    fi
+    if [[ -n "$json_payload" ]]; then
+      json_payload+=$'\n'
+    fi
+    json_payload+="$line"
+  done <<< "$output"
+
+  CLAUDE_AGENT_COUNT=$(
+    printf '%s' "$json_payload" | python3 -c '
+import json, sys
+try:
+    data = json.load(sys.stdin)
+except json.JSONDecodeError:
+    sys.exit(2)
+print(len(data.get("agents") or []))
+'
+  )
+}
+
+if [[ "$safe" == true ]]; then
+  to_stop=()
+  for devbox in "${devboxes[@]}"; do
+    status=$(ff devbox status --state "$devbox" 2>/dev/null || echo unknown)
+    if [[ "$status" != "running" ]]; then
+      echo "$devbox: skipping (status: $status)" >&2
+      continue
+    fi
+
+    if ! claude_agent_count "$devbox"; then
+      echo "$devbox: skipping (could not check Claude sessions)" >&2
+      continue
+    fi
+
+    if [[ "${CLAUDE_AGENT_COUNT:-0}" -gt 0 ]]; then
+      echo "$devbox: skipping (${CLAUDE_AGENT_COUNT} active Claude session(s))" >&2
+      continue
+    fi
+
+    to_stop+=("$devbox")
+  done
+
+  if [[ ${#to_stop[@]} -eq 0 ]]; then
+    echo "no devboxes to stop" >&2
+    exit 0
+  fi
+
+  devboxes=("${to_stop[@]}")
 fi
 
 prefix_output() {

@@ -1,0 +1,221 @@
+#!/usr/bin/env bash
+# List running Claude Code agent sessions as JSON (default) or display text.
+#
+# Usage:
+#   ff claude list [--format json|text] [--exclude-cursor]
+set -euo pipefail
+
+format=json
+exclude_cursor=false
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --format)
+      [[ $# -ge 2 ]] || {
+        echo "error: --format requires json or text" >&2
+        exit 1
+      }
+      format=$2
+      shift 2
+      ;;
+    --exclude-cursor)
+      exclude_cursor=true
+      shift
+      ;;
+    -h | --help)
+      cat <<EOF
+usage: ff claude list [--format json|text] [--exclude-cursor]
+
+List running Claude Code agent sessions.
+
+Options:
+  --format json|text   Output format (default: json)
+  --exclude-cursor     Omit claude-vscode / Cursor entrypoint sessions
+EOF
+      exit 0
+      ;;
+    *)
+      echo "error: unknown argument: $1" >&2
+      exit 1
+      ;;
+  esac
+done
+
+if [[ "$format" != "json" && "$format" != "text" ]]; then
+  echo "error: --format must be json or text" >&2
+  exit 1
+fi
+
+if ! command -v claude >/dev/null 2>&1; then
+  if [[ "$format" == "json" ]]; then
+    echo '{"agents":[]}'
+  fi
+  exit 0
+fi
+
+agents_json=$(claude agents --json 2>/dev/null || echo '[]')
+export AGENTS_JSON="$agents_json"
+export OUTPUT_FORMAT="$format"
+export EXCLUDE_CURSOR="$exclude_cursor"
+
+python3 <<'PY'
+import json
+import os
+import sys
+from pathlib import Path
+
+
+def project_dir(cwd: str) -> Path:
+    return Path.home() / ".claude/projects" / ("-" + cwd.lstrip("/").replace("/", "-"))
+
+
+def message_text(record: dict) -> str | None:
+    msg = record.get("message")
+    if not isinstance(msg, dict):
+        msg = record
+    content = msg.get("content")
+    if isinstance(content, str):
+        return content.strip() or None
+    if isinstance(content, list):
+        parts = [
+            part.get("text", "").strip()
+            for part in content
+            if isinstance(part, dict)
+            and part.get("type") == "text"
+            and part.get("text", "").strip()
+        ]
+        return "\n".join(parts) if parts else None
+    return None
+
+
+def is_user_message(text: str) -> bool:
+    stripped = text.strip()
+    if not stripped:
+        return False
+    if stripped.startswith("<task-notification>"):
+        return False
+    if stripped.startswith("<system-reminder>"):
+        return False
+    return True
+
+
+def transcript_path(session_id: str, cwd: str) -> Path:
+    return project_dir(cwd) / f"{session_id}.jsonl"
+
+
+def last_messages(session_id: str, cwd: str) -> tuple[str | None, str | None]:
+    path = transcript_path(session_id, cwd)
+    if not path.is_file():
+        return None, None
+    last_user = last_assistant = None
+    with path.open(encoding="utf-8") as handle:
+        for line in handle:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                record = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            text = message_text(record)
+            if not text:
+                continue
+            if record.get("type") == "user" and is_user_message(text):
+                last_user = text
+            elif record.get("type") == "assistant":
+                last_assistant = text
+    return last_user, last_assistant
+
+
+def truncate(text: str | None, limit: int = 100) -> str:
+    if not text:
+        return "(none)"
+    one_line = " ".join(text.split())
+    if len(one_line) <= limit:
+        return one_line
+    return one_line[: limit - 1] + "…"
+
+
+def entrypoint_label(entrypoint: str | None) -> str:
+    if entrypoint == "claude-vscode":
+        return "cursor"
+    if entrypoint == "cli":
+        return "cli"
+    return entrypoint or "unknown"
+
+
+def resolve_entrypoint(agent: dict) -> str:
+    entrypoint = agent.get("entrypoint")
+    if not entrypoint:
+        pid = agent.get("pid")
+        if pid is not None:
+            session_file = Path.home() / ".claude/sessions" / f"{pid}.json"
+            if session_file.is_file():
+                try:
+                    meta = json.loads(session_file.read_text(encoding="utf-8"))
+                    entrypoint = meta.get("entrypoint")
+                except (json.JSONDecodeError, OSError):
+                    pass
+    return entrypoint_label(entrypoint)
+
+
+def enrich_agent(agent: dict) -> dict:
+    session_id = agent.get("sessionId") or "?"
+    cwd = agent.get("cwd", "")
+    entrypoint = resolve_entrypoint(agent)
+    last_user, last_assistant = (
+        last_messages(session_id, cwd) if session_id != "?" and cwd else (None, None)
+    )
+    return {
+        "sessionId": session_id,
+        "pid": agent.get("pid"),
+        "cwd": cwd,
+        "kind": agent.get("kind"),
+        "startedAt": agent.get("startedAt"),
+        "name": agent.get("name"),
+        "status": agent.get("status") or "running",
+        "entrypoint": entrypoint,
+        "lastUserMessage": last_user,
+        "lastAssistantMessage": last_assistant,
+    }
+
+
+def format_header(agent: dict) -> str:
+    session_id = agent.get("sessionId") or "?"
+    status = agent.get("status") or "running"
+    entrypoint = agent.get("entrypoint") or "unknown"
+    return f"{session_id} ({status} · {entrypoint})"
+
+
+def format_text(agents: list[dict]) -> str:
+    blocks: list[str] = []
+    for agent in agents:
+        blocks.append(
+            "\n".join(
+                [
+                    format_header(agent),
+                    f"user: {truncate(agent.get('lastUserMessage'))}",
+                    f"agent: {truncate(agent.get('lastAssistantMessage'))}",
+                ]
+            )
+        )
+    return "\n\n".join(blocks)
+
+
+try:
+    raw_agents = json.loads(os.environ.get("AGENTS_JSON") or "[]")
+except json.JSONDecodeError:
+    raw_agents = []
+
+exclude_cursor = os.environ.get("EXCLUDE_CURSOR") == "true"
+agents = [enrich_agent(agent) for agent in raw_agents]
+if exclude_cursor:
+    agents = [agent for agent in agents if agent.get("entrypoint") != "cursor"]
+
+output_format = os.environ.get("OUTPUT_FORMAT", "json")
+if output_format == "text":
+    print(format_text(agents))
+else:
+    json.dump({"agents": agents}, sys.stdout, indent=2)
+    print()
+PY
