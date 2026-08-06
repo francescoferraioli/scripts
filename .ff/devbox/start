@@ -36,7 +36,26 @@ if [[ ${#devboxes[@]} -eq 0 ]]; then
   usage
 fi
 
+prefix_output() {
+  local devbox=$1
+  while IFS= read -r line || [[ -n "${line:-}" ]]; do
+    printf '%s: %s\n' "$devbox" "$line"
+  done
+}
+
+pids=()
 for devbox in "${devboxes[@]}"; do
-  echo "starting ${devbox}..."
-  coder start -y "$devbox"
+  (
+    {
+      echo "starting ${devbox}..."
+      coder start -y "$devbox"
+    } 2>&1 | prefix_output "$devbox"
+  ) &
+  pids+=($!)
 done
+
+failed=0
+for pid in "${pids[@]}"; do
+  wait "$pid" || failed=1
+done
+exit "$failed"
