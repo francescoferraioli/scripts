@@ -4,12 +4,15 @@
 # Usage:
 #   ff devbox status [devbox...]
 #   ff devbox status --all
+#   ff devbox status --state <devbox>
 #
 # With no devbox names, shows workspaces from `ff devbox all`.
 # --all lists every workspace owned by you in Coder.
+# --state prints only the Coder build status for one devbox (e.g. running, stopping).
 set -euo pipefail
 
 show_all=false
+state_only=false
 devboxes=()
 
 while [[ $# -gt 0 ]]; do
@@ -18,15 +21,21 @@ while [[ $# -gt 0 ]]; do
       show_all=true
       shift
       ;;
+    --state | -s)
+      state_only=true
+      shift
+      ;;
     -h | --help)
       cat <<EOF
 usage: ff devbox status [devbox...]
        ff devbox status --all
+       ff devbox status --state <devbox>
 
 Show Coder workspace status. Default devboxes: $(ff devbox all).
 
 Options:
-  --all   List every Coder workspace you own (not just ff devbox all)
+  --all         List every Coder workspace you own (not just ff devbox all)
+  --state, -s   Print only the build status for one devbox (requires <devbox>)
 EOF
       exit 0
       ;;
@@ -47,6 +56,21 @@ if [[ "$show_all" == true && ${#devboxes[@]} -gt 0 ]]; then
   exit 1
 fi
 
+if [[ "$state_only" == true ]]; then
+  if [[ "$show_all" == true ]]; then
+    echo "error: --state requires a devbox name; cannot use --all" >&2
+    exit 1
+  fi
+  if [[ ${#devboxes[@]} -eq 0 ]]; then
+    echo "error: --state requires exactly one devbox name" >&2
+    exit 1
+  fi
+  if [[ ${#devboxes[@]} -gt 1 ]]; then
+    echo "error: --state requires exactly one devbox name" >&2
+    exit 1
+  fi
+fi
+
 if [[ "$show_all" != true && ${#devboxes[@]} -eq 0 ]]; then
   read -r -a devboxes <<< "$(ff devbox all)"
 fi
@@ -54,6 +78,7 @@ fi
 CODER_JSON=$(coder list -o json --search 'owner:me')
 export CODER_JSON
 export SHOW_ALL="$show_all"
+export STATE_ONLY="$state_only"
 export DEVBOX_NAMES="${devboxes[*]}"
 
 python3 <<'PY'
@@ -62,6 +87,7 @@ import os
 import sys
 
 show_all = os.environ.get("SHOW_ALL") == "true"
+state_only = os.environ.get("STATE_ONLY") == "true"
 names = set(filter(None, os.environ.get("DEVBOX_NAMES", "").split()))
 
 workspaces = json.loads(os.environ["CODER_JSON"])
@@ -77,7 +103,15 @@ if not show_all:
 workspaces.sort(key=lambda w: w["name"])
 
 if not workspaces:
+    if state_only:
+        print("unknown")
+        sys.exit(1)
     print("no matching workspaces")
+    sys.exit(0)
+
+if state_only:
+    build = workspaces[0].get("latest_build") or {}
+    print(build.get("status") or "unknown")
     sys.exit(0)
 
 rows = []

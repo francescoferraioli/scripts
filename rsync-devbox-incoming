@@ -43,6 +43,13 @@ mkdir -p "$LOCAL_INCOMING"
 sync_one() {
   local name=$1
   local dest="${LOCAL_INCOMING}/${name}"
+  local devbox_status
+
+  devbox_status=$(ff devbox status -s "$name")
+  if [[ "$devbox_status" != "running" ]]; then
+    echo "==> ${name}: skipping (status: ${devbox_status})"
+    return 0
+  fi
 
   mkdir -p "$dest"
 
