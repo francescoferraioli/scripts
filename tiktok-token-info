@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Get authorized TikTok ad accounts for an access token.
+# Docs: https://business-api.tiktok.com/portal/docs/get-authorized-ad-accounts/v1.3
+
+ENDPOINT="https://business-api.tiktok.com/open_api/v1.3/oauth2/advertiser/get/"
+OP_APP_ID='op://Employee/Tiktok app credentials/l66q6rp6qlmdh2dhkkwwln2xim'
+OP_SECRET='op://Employee/Tiktok app credentials/uc5bfkesq5mkklijxjnipmek54'
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+usage() {
+  cat <<'EOF' >&2
+Usage:
+  tiktok-token-info <access_token>
+  TIKTOK_ACCESS_TOKEN=... tiktok-token-info
+
+Loads app_id and client secret from 1Password (Tiktok app credentials),
+then calls oauth2/advertiser/get to list authorized ad accounts.
+EOF
+  exit 1
+}
+
+die() {
+  echo "ERROR: $*" >&2
+  exit 1
+}
+
+access_token="${TIKTOK_ACCESS_TOKEN:-${1:-}}"
+
+if [[ -z "$access_token" ]]; then
+  usage
+fi
+
+command -v jq >/dev/null 2>&1 || die "jq is required"
+
+app_id="$("${SCRIPT_DIR}/op-read" "$OP_APP_ID")"
+secret="$("${SCRIPT_DIR}/op-read" "$OP_SECRET")"
+
+[[ -n "$app_id" && -n "$secret" ]] || die "Could not read TikTok credentials from 1Password"
+
+response="$(curl --silent --show-error --fail-with-body \
+  --get "$ENDPOINT" \
+  --header "Access-Token: ${access_token}" \
+  --data-urlencode "app_id=${app_id}" \
+  --data-urlencode "secret=${secret}")"
+
+echo "$response" | jq .
+
+if [[ "$(echo "$response" | jq -r '.code // empty')" != "0" ]]; then
+  die "$(echo "$response" | jq -r '.message // "request failed"')"
+fi
