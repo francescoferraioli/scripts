@@ -1,0 +1,207 @@
+#!/usr/bin/env bash
+# Report whether devboxes have active Claude agent sessions.
+#
+# Usage:
+#   ff devbox ai-status [devbox]|all [<devbox>|all...]
+#   ff devbox ai-status --state <devbox>
+#
+# With no devbox names, checks workspaces from `ff devbox all`.
+# --state prints only idle, busy, or unknown for one devbox (for scripting).
+set -euo pipefail
+
+# shellcheck source=/dev/null
+source "${FF_SCRIPT_HOME}/.lib/devbox.sh"
+devbox_prepend_if_omitted "$0" "$@"
+
+state_only=false
+devboxes=()
+
+usage() {
+  cat <<EOF
+usage: ff devbox ai-status [devbox]|all [<devbox>|all...]
+       ff devbox ai-status --state <devbox>
+
+Report Claude agent activity on devboxes. Default devboxes: $(ff devbox all).
+
+Options:
+  --state, -s   Print only idle, busy, or unknown for one devbox
+EOF
+  exit "${1:-1}"
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --state | -s)
+      state_only=true
+      shift
+      ;;
+    all)
+      read -r -a all_devboxes <<< "$(ff devbox all)"
+      devboxes+=("${all_devboxes[@]}")
+      shift
+      ;;
+    -h | --help)
+      usage 0
+      ;;
+    *)
+      devboxes+=("$1")
+      shift
+      ;;
+  esac
+done
+
+if [[ "$state_only" == true ]]; then
+  if [[ ${#devboxes[@]} -eq 0 ]]; then
+    echo "error: --state requires exactly one devbox name" >&2
+    exit 1
+  fi
+  if [[ ${#devboxes[@]} -gt 1 ]]; then
+    echo "error: --state requires exactly one devbox name" >&2
+    exit 1
+  fi
+fi
+
+if [[ ${#devboxes[@]} -eq 0 ]]; then
+  read -r -a devboxes <<< "$(ff devbox all)"
+fi
+
+if [[ ${#devboxes[@]} -eq 0 ]]; then
+  echo "error: no devboxes to check" >&2
+  exit 1
+fi
+
+resolve_ff_cmd() {
+  if command -v ff >/dev/null 2>&1; then
+    printf '%s\n' ff
+  elif [[ -x "${HOME}/scripts/ff" ]]; then
+    printf '%s\n' "${HOME}/scripts/ff"
+  else
+    return 1
+  fi
+}
+
+claude_agent_count() {
+  local devbox=$1
+  local ff_cmd
+  ff_cmd=$(resolve_ff_cmd) || return 2
+
+  local output
+  if ! output=$("${ff_cmd}" devbox run "$devbox" -- "${ff_cmd}" claude list 2>/dev/null); then
+    return 2
+  fi
+
+  local prefix="${devbox}: "
+  local json_payload=""
+  while IFS= read -r line || [[ -n "${line:-}" ]]; do
+    if [[ "$line" == "$prefix"* ]]; then
+      line="${line#"$prefix"}"
+    fi
+    if [[ -n "$json_payload" ]]; then
+      json_payload+=$'\n'
+    fi
+    json_payload+="$line"
+  done <<< "$output"
+
+  CLAUDE_AGENT_COUNT=$(
+    printf '%s' "$json_payload" | python3 -c '
+import json, sys
+try:
+    data = json.load(sys.stdin)
+except json.JSONDecodeError:
+    sys.exit(2)
+print(len(data.get("agents") or []))
+'
+  )
+}
+
+ai_status_for_devbox() {
+  local devbox=$1
+
+  if command -v coder >/dev/null 2>&1; then
+    local workspace_status
+    workspace_status=$(coder list -o json --search "owner:me name:${devbox}" 2>/dev/null | python3 -c '
+import json, sys
+try:
+    workspaces = json.load(sys.stdin)
+except json.JSONDecodeError:
+    sys.exit(0)
+if not workspaces:
+    print("unknown")
+    sys.exit(0)
+build = (workspaces[0].get("latest_build") or {})
+print(build.get("status") or "unknown")
+' || echo unknown)
+
+    if [[ "$workspace_status" != "running" ]]; then
+      AI_STATUS=idle
+      CLAUDE_AGENT_COUNT=0
+      return 0
+    fi
+  fi
+
+  if ! claude_agent_count "$devbox"; then
+    AI_STATUS=unknown
+    CLAUDE_AGENT_COUNT=
+    return 0
+  fi
+
+  if [[ "${CLAUDE_AGENT_COUNT:-0}" -gt 0 ]]; then
+    AI_STATUS=busy
+  else
+    AI_STATUS=idle
+  fi
+}
+
+print_ai_status() {
+  local devbox=$1
+  ai_status_for_devbox "$devbox"
+
+  if [[ "$state_only" == true ]]; then
+    printf '%s\n' "$AI_STATUS"
+    return 0
+  fi
+
+  case "$AI_STATUS" in
+    idle)
+      printf '%s: idle\n' "$devbox"
+      ;;
+    busy)
+      printf '%s: busy (%s active Claude session(s))\n' "$devbox" "$CLAUDE_AGENT_COUNT"
+      ;;
+    unknown)
+      printf '%s: unknown (could not check Claude sessions)\n' "$devbox"
+      ;;
+  esac
+}
+
+if [[ "$state_only" == true ]]; then
+  print_ai_status "${devboxes[0]}"
+  exit 0
+fi
+
+pids=()
+tmp_dir=$(mktemp -d)
+trap 'rm -rf "$tmp_dir"' EXIT
+
+for devbox in "${devboxes[@]}"; do
+  (
+    print_ai_status "$devbox" >"${tmp_dir}/${devbox}"
+  ) &
+  pids+=($!)
+done
+
+failed=0
+for pid in "${pids[@]}"; do
+  wait "$pid" || failed=1
+done
+
+for devbox in "${devboxes[@]}"; do
+  if [[ -f "${tmp_dir}/${devbox}" ]]; then
+    cat "${tmp_dir}/${devbox}"
+  else
+    printf '%s: unknown (could not check Claude sessions)\n' "$devbox"
+    failed=1
+  fi
+done
+
+exit "$failed"

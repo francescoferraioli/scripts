@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Stop all idle devboxes (running with no active Claude sessions).
+#
+# Usage:
+#   ff devbox sleep
+set -euo pipefail
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -h | --help)
+      cat <<EOF
+usage: ff devbox sleep
+
+Stop all devboxes that are running and idle (ff devbox stop --safe all).
+EOF
+      exit 0
+      ;;
+    *)
+      echo "usage: ff devbox sleep" >&2
+      exit 1
+      ;;
+  esac
+done
+
+exec ff devbox stop --safe all
