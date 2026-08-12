@@ -1,2 +1,2 @@
 #!/bin/sh
-claude agents --permission-mode auto "$@"
+claude agents --dangerously-skip-permissions "$@"
