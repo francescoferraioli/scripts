@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
+# Usage:
+#   ff devbox wake [<devbox>|all...]
+#
+# With no names, wakes all workspaces from `ff devbox all`.
 # shellcheck source=/dev/null
 source "${FF_SCRIPT_HOME}/.lib/devbox.sh"
 devbox_prepend_if_omitted "$0" "$@"
 
 if [[ $# -eq 0 ]]; then
-  echo "usage: ff devbox wake <devbox> [<devbox>...]" >&2
-  exit 1
+  set -- all
 fi
 ff devbox ff "$@" -- devbox resetup
