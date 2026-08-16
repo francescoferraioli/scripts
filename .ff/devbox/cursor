@@ -2,6 +2,7 @@
 # shellcheck source=/dev/null
 source "${FF_SCRIPT_HOME}/.lib/devbox.sh"
 devbox_prepend_if_omitted "$0" "$@"
+devbox_require_running "$1" || exit 1
 
 command=cursor
 canva_number=

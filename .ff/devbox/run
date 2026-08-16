@@ -6,30 +6,39 @@ source "${FF_SCRIPT_HOME}/.lib/devbox.sh"
 devbox_prepend_if_omitted "$0" "$@"
 
 if [[ $# -eq 0 ]]; then
-  echo "usage: ff devbox run <devbox>|all [<devbox>|all...] -- <command...>" >&2
+  echo "usage: ff devbox run [--force] <devbox>|all [<devbox>|all...] -- <command...>" >&2
   exit 1
 fi
 
+force=false
 devboxes=()
 while [[ $# -gt 0 && "$1" != "--" ]]; do
-  if [[ "$1" == "all" ]]; then
-    read -r -a all_devboxes <<< "$(ff devbox all)"
-    devboxes+=("${all_devboxes[@]}")
-  else
-    devboxes+=("$1")
-  fi
-  shift
+  case "$1" in
+    --force)
+      force=true
+      shift
+      ;;
+    all)
+      read -r -a all_devboxes <<< "$(ff devbox all)"
+      devboxes+=("${all_devboxes[@]}")
+      shift
+      ;;
+    *)
+      devboxes+=("$1")
+      shift
+      ;;
+  esac
 done
 
 if [[ ${#devboxes[@]} -eq 0 ]]; then
   echo "error: at least one devbox name is required" >&2
-  echo "usage: ff devbox run <devbox>|all [<devbox>|all...] -- <command...>" >&2
+  echo "usage: ff devbox run [--force] <devbox>|all [<devbox>|all...] -- <command...>" >&2
   exit 1
 fi
 
 if [[ $# -eq 0 ]]; then
   echo "error: missing -- before command" >&2
-  echo "usage: ff devbox run <devbox>|all [<devbox>|all...] -- <command...>" >&2
+  echo "usage: ff devbox run [--force] <devbox>|all [<devbox>|all...] -- <command...>" >&2
   exit 1
 fi
 
@@ -57,6 +66,19 @@ prefix_output() {
     printf '%s: %s\n' "$devbox" "$line"
   done
 }
+
+if [[ "$force" != true ]]; then
+  running=()
+  for devbox in "${devboxes[@]}"; do
+    if devbox_skip_unless_running "$devbox"; then
+      running+=("$devbox")
+    fi
+  done
+  if [[ ${#running[@]} -eq 0 ]]; then
+    exit 0
+  fi
+  devboxes=("${running[@]}")
+fi
 
 for devbox in "${devboxes[@]}"; do
   (

@@ -3,6 +3,8 @@
 #   ff devbox wake [<devbox>|all...]
 #
 # With no names, wakes all workspaces from `ff devbox all`.
+# Starts stopped workspaces, then runs resetup even if they are still coming up.
+set -euo pipefail
 # shellcheck source=/dev/null
 source "${FF_SCRIPT_HOME}/.lib/devbox.sh"
 devbox_prepend_if_omitted "$0" "$@"
@@ -10,4 +12,5 @@ devbox_prepend_if_omitted "$0" "$@"
 if [[ $# -eq 0 ]]; then
   set -- all
 fi
-ff devbox ff "$@" -- devbox resetup
+ff devbox start "$@"
+ff devbox run --force "$@" -- ff devbox resetup

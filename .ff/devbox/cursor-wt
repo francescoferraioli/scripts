@@ -23,6 +23,7 @@ fi
 
 devbox=$1
 shift
+devbox_require_running "$devbox" || exit 1
 
 if [[ $# -gt 0 ]]; then
   echo "error: unexpected argument(s): $*" >&2

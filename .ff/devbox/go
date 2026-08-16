@@ -18,6 +18,8 @@
 set -euo pipefail
 
 # shellcheck source=/dev/null
+source "${FF_SCRIPT_HOME}/.lib/devbox.sh"
+# shellcheck source=/dev/null
 source "${FF_SCRIPT_HOME}/.lib/github-pr.sh"
 
 DEFAULT_DEVBOX=maldini
@@ -93,6 +95,8 @@ if [[ "$where_status" -eq 0 && -n "${where_out:-}" ]]; then
     echo "using existing checkout on ${devbox}: ${existing_worktree}" >&2
   fi
 fi
+
+devbox_require_running "$devbox" || exit 1
 
 if [[ -z "$existing_worktree" ]]; then
   # Reserved sibling dirs under ~/work on Canva Coder boxes (create path only).

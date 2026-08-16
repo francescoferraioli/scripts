@@ -94,6 +94,8 @@ if [[ "$local_mode" -eq 1 ]]; then
   run_tmux "$session" "$cwd" "${cmd[@]}"
 else
   # Build `ff devbox attach --local …` argv on this side so the remote just execs it.
+  devbox_require_running "$devbox" || exit 1
+
   remote_attach=$(printf '%q ' ff devbox attach --local "$session" "$cwd")
   if [[ ${#cmd[@]} -gt 0 ]]; then
     remote_attach+=$(printf '%q ' -- "${cmd[@]}")
