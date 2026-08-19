@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Find which of your Coder devboxes have a git branch checked out.
+# Find which of your Coder devboxes have a local git branch.
 #
 # Usage:
 #   ff devbox where <branch-or-pr-url>
 #
 # Checks each name from `ff devbox all` via `ff devbox run-canva` for a
-# canva worktree with that branch checked out. PR URLs are resolved to the
+# local refs/heads/<branch> in ~/work/canva. PR URLs are resolved to the
 # head branch via `ff gh branch` first.
 set -euo pipefail
 
@@ -32,33 +32,17 @@ else
   branch=$target
 fi
 
-# Braced so run-canva's `cd ~/work/canva && …` keeps the whole script as one
-# compound command (not only the first line).
-remote_cmd=$(
-  cat <<EOF
-{
-  BRANCH=$(printf '%q' "$branch")
-  wt_path=
-  while IFS= read -r line || [[ -n "\${line:-}" ]]; do
-    if [[ "\$line" == "worktree "* ]]; then
-      wt_path=\${line#worktree }
-    elif [[ "\$line" == "branch "* ]]; then
-      ref=\${line#branch }
-      if [[ "\$ref" == "refs/heads/\$BRANCH" && -n "\${wt_path:-}" ]]; then
-        printf '%s\n' "\$wt_path"
-      fi
-    elif [[ -z "\$line" ]]; then
-      wt_path=
-    fi
-  done < <(git worktree list --porcelain)
-}
-EOF
-)
+quoted_branch=$(printf '%q' "$branch")
+output=$(ff devbox run-canva all -- "git show-ref --verify --quiet refs/heads/${quoted_branch} && echo yes") || true
 
-output=$(ff devbox run-canva all -- "$remote_cmd") || true
+matches=()
+while IFS= read -r line || [[ -n "${line:-}" ]]; do
+  [[ "$line" == *": yes" ]] || continue
+  matches+=("${line%%:*}")
+done <<< "${output:-}"
 
-if ! grep -q ': /' <<<"${output:-}"; then
-  echo "branch '${branch}' is not checked out on any devbox" >&2
+if [[ ${#matches[@]} -eq 0 ]]; then
+  echo "branch '${branch}' is not a local branch on any running devbox" >&2
   if [[ -n "${output:-}" ]]; then
     printf '%s\n' "$output" >&2
     exit 2
@@ -66,4 +50,4 @@ if ! grep -q ': /' <<<"${output:-}"; then
   exit 1
 fi
 
-printf '%s\n' "$output"
+printf '%s\n' "${matches[@]}"

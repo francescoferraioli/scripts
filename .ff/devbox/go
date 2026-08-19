@@ -9,8 +9,9 @@
 # branch via `ff gh branch` before the worktree/tmux setup.
 #
 # Picks the target with `ff devbox where`:
-#   - If the branch is already checked out on a devbox, use that box + worktree
-#   - Otherwise default to maldini and create ~/work/<sanitized-branch> if needed
+#   - If a box already has a local copy of the branch, use that box
+#   - Otherwise default to maldini
+# Then create ~/work/<sanitized-branch> if needed.
 #
 # On the chosen box:
 #   - Ensure the worktree exists
@@ -76,6 +77,7 @@ fi
 
 devbox=$DEFAULT_DEVBOX
 existing_worktree=
+found_local_branch=false
 
 set +e
 where_out=$(ff devbox where "$branch" 2>/dev/null)
@@ -83,16 +85,16 @@ where_status=$?
 set -e
 
 if [[ "$where_status" -eq 0 && -n "${where_out:-}" ]]; then
-  where_matches=$(grep ': /' <<<"$where_out" || true)
+  where_matches=$(grep -v '^[[:space:]]*$' <<<"$where_out" || true)
   if [[ -n "$where_matches" ]]; then
     first=$(head -n1 <<<"$where_matches")
-    match_count=$(grep -c ': /' <<<"$where_matches" || true)
-    devbox=${first%%:*}
-    existing_worktree=${first#*: }
+    match_count=$(grep -c . <<<"$where_matches" || true)
+    devbox=$first
+    found_local_branch=true
     if [[ "$match_count" -gt 1 ]]; then
       echo "warning: branch '${branch}' found on ${match_count} devboxes; using ${devbox}" >&2
     fi
-    echo "using existing checkout on ${devbox}: ${existing_worktree}" >&2
+    echo "using ${devbox} (has local branch '${branch}')" >&2
   fi
 fi
 
@@ -106,7 +108,9 @@ if [[ -z "$existing_worktree" ]]; then
       exit 1
       ;;
   esac
-  echo "no existing checkout found; using ${devbox}" >&2
+  if [[ "$found_local_branch" != true ]]; then
+    echo "no local branch found; using ${devbox}" >&2
+  fi
 fi
 
 # Quoted suffix for `ff devbox attach --local "$NAME" "$WORKTREE"[ -- cmd...]`
