@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+# Snapshot a tmux window pane.
+#
+# Usage:
+#   tmux-status -t <target> [--lines N]
+#
+# Target is session:window (index or name), e.g. 0:2 or 0:claude-hi.
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage: tmux-status -t <target> [--lines N]
+
+Snapshot a tmux window pane.
+
+  -t, --target TARGET  session:window (index or name)
+  --lines N            Capture the last N lines (default: 80)
+  -h, --help           Show help
+EOF
+}
+
+fail() {
+  echo "tmux-status: $*" >&2
+  exit 1
+}
+
+TARGET=
+LINES=80
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -t | --target)
+      [[ $# -ge 2 ]] || fail "missing value for $1"
+      TARGET=$2
+      shift 2
+      ;;
+    --lines)
+      [[ $# -ge 2 ]] || fail "missing value for $1"
+      LINES=$2
+      shift 2
+      ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    *)
+      fail "unknown option: $1"
+      ;;
+  esac
+done
+
+[[ -n "$TARGET" ]] || fail "missing -t <target>"
+[[ "$TARGET" == *:* ]] || fail "target must be session:window"
+command -v tmux >/dev/null 2>&1 || fail "tmux not on PATH"
+
+session=${TARGET%%:*}
+window=${TARGET#*:}
+
+resolve_window() {
+  tmux has-session -t "=$session" 2>/dev/null || return 1
+
+  if [[ "$window" =~ ^[0-9]+$ ]]; then
+    tmux list-windows -t "=$session" -F '#{window_index}' | grep -qx "$window" || return 1
+    printf '%s' "$window"
+    return 0
+  fi
+
+  tmux list-windows -t "=$session" -F '#{window_index}	#{window_name}' |
+    awk -F '\t' -v n="$window" '$2 == n { print $1; found=1; exit } END { exit found ? 0 : 1 }'
+}
+
+if ! resolved=$(resolve_window); then
+  printf 'exists=0\ntarget=%s\n' "$TARGET"
+  exit 0
+fi
+
+ref="${session}:${resolved}"
+
+tmux display-message -p -t "$ref" \
+  'exists=1
+dead=#{pane_dead}
+command=#{pane_current_command}
+target=#{session_name}:#{window_index}
+name=#{window_name}'
+printf '%s\n' '---'
+tmux capture-pane -p -J -t "$ref" -S "-${LINES}"

@@ -140,7 +140,7 @@ if [[ "$created" -eq 1 ]]; then
     tmux new-session \
       -d \
       -P \
-      -F 'session=#{session_name} window=#{window_index} name=#{window_name}' \
+      -F 'session=#{session_name} window=#{window_index} name=#{window_name} target=#{session_name}:#{window_index}' \
       -s "$session" \
       -n "$NAME" \
       -c "$CWD" \
@@ -150,7 +150,7 @@ else
   info=$(
     tmux new-window \
       -P \
-      -F 'session=#{session_name} window=#{window_index} name=#{window_name}' \
+      -F 'session=#{session_name} window=#{window_index} name=#{window_name} target=#{session_name}:#{window_index}' \
       -t "=$session:" \
       -n "$NAME" \
       -c "$CWD" \
@@ -160,5 +160,4 @@ fi
 
 printf '%s\n' "$info"
 printf 'cwd=%s\n' "$CWD"
-printf 'target=%s:%s\n' "$session" "$NAME"
 printf 'created=%s\n' "$created"

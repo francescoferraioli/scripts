@@ -1,0 +1,141 @@
+#!/usr/bin/env bash
+# Classify whether a Claude Code tmux window is still working.
+#
+# Usage:
+#   claude-tmux-status -t <target> [--lines N]
+#
+# Prints status=starting|working|idle|exited plus a pane snapshot.
+# Exit 0 when idle or exited, 2 when still going, 1 on usage error.
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage: claude-tmux-status -t <target> [--lines N]
+
+Classify a Claude Code tmux window.
+
+  -t, --target TARGET  session:window from claude-tmux / tmux-run
+  --lines N            Capture the last N lines (default: 80)
+  -h, --help           Show help
+
+status=starting|working|idle|exited
+Exit 0 when idle or exited, 2 when still going.
+EOF
+}
+
+fail() {
+  echo "claude-tmux-status: $*" >&2
+  exit 1
+}
+
+TARGET=
+LINES=80
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -t | --target)
+      [[ $# -ge 2 ]] || fail "missing value for $1"
+      TARGET=$2
+      shift 2
+      ;;
+    --lines)
+      [[ $# -ge 2 ]] || fail "missing value for $1"
+      LINES=$2
+      shift 2
+      ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    *)
+      fail "unknown option: $1"
+      ;;
+  esac
+done
+
+[[ -n "$TARGET" ]] || fail "missing -t <target>"
+command -v tmux-status >/dev/null 2>&1 || fail "tmux-status not on PATH"
+
+snapshot=$(tmux-status -t "$TARGET" --lines "$LINES")
+export CLAUDE_TMUX_SNAPSHOT="$snapshot"
+
+python3 <<'PY'
+import os
+import re
+import sys
+
+raw = os.environ.get("CLAUDE_TMUX_SNAPSHOT") or ""
+if "---\n" in raw:
+    header, body = raw.split("---\n", 1)
+else:
+    header, body = raw, ""
+
+fields = {}
+for line in header.splitlines():
+    if "=" in line:
+        key, value = line.split("=", 1)
+        fields[key] = value
+
+exists = fields.get("exists") == "1"
+dead = fields.get("dead") == "1"
+command = fields.get("command") or ""
+target = fields.get("target") or ""
+name = fields.get("name") or ""
+
+def print_status(status: str, reason: str) -> None:
+    print(f"status={status}")
+    print(f"reason={reason}")
+    print(f"exists={1 if exists else 0}")
+    print(f"dead={1 if dead else 0}")
+    print(f"command={command}")
+    print(f"target={target}")
+    print(f"name={name}")
+    print("---")
+    print(body.rstrip("\n"))
+
+if not exists or dead:
+    print_status("exited", "window_gone" if not exists else "pane_dead")
+    sys.exit(0)
+
+text = body.lower()
+running = command in {"claude", "node"}
+
+working_pats = (
+    r"esc to interrupt",
+    r"to interrupt",
+    r"ctrl\+b to run in background",
+    r"\bthinking\b",
+    r"\brunning\b",
+    r"\baccomplishing\b",
+    r"\bsynthesizing\b",
+    r"↓\s*\d+\s*tokens",
+    r"…\s*\(\d+s",
+    r"\(\d+s\s*[·•]",
+    r"✶",
+    r"✳",
+)
+starting_pats = (
+    r"welcome to claude",
+    r"just getting started",
+    r"loading",
+)
+
+if any(re.search(pat, text) for pat in working_pats):
+    print_status("working", "busy_in_pane")
+    sys.exit(2)
+
+if running and any(re.search(pat, text) for pat in starting_pats):
+    print_status("starting", "startup_ui")
+    sys.exit(2)
+
+if running and len(text.strip()) < 40:
+    print_status("starting", "empty_pane")
+    sys.exit(2)
+
+if running:
+    print_status("idle", "waiting_for_input")
+    sys.exit(0)
+
+print_status("exited", f"command_{command or 'none'}")
+sys.exit(0)
+PY
