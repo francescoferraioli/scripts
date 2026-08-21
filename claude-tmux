@@ -1,0 +1,121 @@
+#!/usr/bin/env bash
+# Start Claude Code with a prompt in a new tmux window via tmux-run.
+#
+# Usage:
+#   claude-tmux [options] <prompt>
+#   claude-tmux [options] -- <prompt>
+#
+# Options:
+#   -C, --cwd DIR        Working directory (default: current directory)
+#   -t, --session NAME   tmux session (default: current, else most recently attached)
+#   -n, --name NAME      Window name (default: derived from the prompt)
+#   --prompt-file FILE   Read the prompt from a file instead of args
+#   --dry-run            Print the tmux command only
+#   -h, --help           Show help
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage: claude-tmux [options] <prompt>
+
+Start Claude Code in a new tmux window with the given prompt.
+
+  -C, --cwd DIR        Working directory (default: current directory)
+  -t, --session NAME   tmux session (default: current, else most recently attached)
+  -n, --name NAME      Window name (default: derived from the prompt)
+  --prompt-file FILE   Read the prompt from a file instead of args
+  --dry-run            Print the tmux command only
+  -h, --help           Show help
+EOF
+}
+
+fail() {
+  echo "claude-tmux: $*" >&2
+  exit 1
+}
+
+CWD=$PWD
+SESSION=
+NAME=
+PROMPT_FILE=
+DRY_RUN=0
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -C | --cwd)
+      [[ $# -ge 2 ]] || fail "missing value for $1"
+      CWD=$2
+      shift 2
+      ;;
+    -t | --session)
+      [[ $# -ge 2 ]] || fail "missing value for $1"
+      SESSION=$2
+      shift 2
+      ;;
+    -n | --name)
+      [[ $# -ge 2 ]] || fail "missing value for $1"
+      NAME=$2
+      shift 2
+      ;;
+    --prompt-file)
+      [[ $# -ge 2 ]] || fail "missing value for $1"
+      PROMPT_FILE=$2
+      shift 2
+      ;;
+    --dry-run)
+      DRY_RUN=1
+      shift
+      ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    --)
+      shift
+      break
+      ;;
+    -*)
+      fail "unknown option: $1"
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
+if [[ -n "$PROMPT_FILE" ]]; then
+  [[ -f "$PROMPT_FILE" ]] || fail "prompt file not found: $PROMPT_FILE"
+  PROMPT=$(cat "$PROMPT_FILE")
+elif [[ $# -gt 0 ]]; then
+  PROMPT=$*
+elif [[ ! -t 0 ]]; then
+  PROMPT=$(cat)
+else
+  usage >&2
+  exit 1
+fi
+
+[[ -n "$PROMPT" ]] || fail "prompt is empty"
+
+command -v claude >/dev/null 2>&1 || fail "claude not on PATH"
+command -v tmux-run >/dev/null 2>&1 || fail "tmux-run not on PATH"
+
+sanitize_name() {
+  printf '%s' "$1" | tr -cs '[:alnum:]_-' '-' | sed 's/^-*//;s/-*$//' | cut -c1-32
+}
+
+if [[ -z "$NAME" ]]; then
+  slug=$(sanitize_name "$(printf '%s' "$PROMPT" | tr '[:upper:]' '[:lower:]')")
+  if [[ -n "$slug" ]]; then
+    NAME="claude-$slug"
+  else
+    NAME=claude
+  fi
+fi
+
+run_args=(-C "$CWD" -n "$NAME")
+[[ -n "$SESSION" ]] && run_args+=(-t "$SESSION")
+[[ "$DRY_RUN" -eq 1 ]] && run_args+=(--dry-run)
+
+# Match ff c: interactive Claude that skips permission prompts.
+exec tmux-run "${run_args[@]}" -- claude --dangerously-skip-permissions -- "$PROMPT"

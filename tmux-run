@@ -1,0 +1,164 @@
+#!/usr/bin/env bash
+# Run a command in a new tmux window.
+#
+# Usage:
+#   tmux-run [options] -- <command...>
+#
+# Options:
+#   -C, --cwd DIR        Working directory (default: current directory)
+#   -t, --session NAME   tmux session (default: current, else most recently attached;
+#                        created if missing, as "main" when none exist)
+#   -n, --name NAME      Window name (default: command basename)
+#   --dry-run            Print the tmux command only
+#   -h, --help           Show help
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage: tmux-run [options] -- <command...>
+
+Run a command in a new tmux window.
+
+  -C, --cwd DIR        Working directory (default: current directory)
+  -t, --session NAME   tmux session (default: current, else most recently attached;
+                       created if missing, as "main" when none exist)
+  -n, --name NAME      Window name (default: command basename)
+  --dry-run            Print the tmux command only
+  -h, --help           Show help
+EOF
+}
+
+fail() {
+  echo "tmux-run: $*" >&2
+  exit 1
+}
+
+CWD=$PWD
+SESSION=
+NAME=
+DRY_RUN=0
+DEFAULT_SESSION=main
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -C | --cwd)
+      [[ $# -ge 2 ]] || fail "missing value for $1"
+      CWD=$2
+      shift 2
+      ;;
+    -t | --session)
+      [[ $# -ge 2 ]] || fail "missing value for $1"
+      SESSION=$2
+      shift 2
+      ;;
+    -n | --name)
+      [[ $# -ge 2 ]] || fail "missing value for $1"
+      NAME=$2
+      shift 2
+      ;;
+    --dry-run)
+      DRY_RUN=1
+      shift
+      ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    --)
+      shift
+      break
+      ;;
+    -*)
+      fail "unknown option: $1"
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
+[[ $# -gt 0 ]] || fail "missing command (use: tmux-run [options] -- <command...>)"
+[[ -d "$CWD" ]] || fail "cwd does not exist: $CWD"
+
+command -v tmux >/dev/null 2>&1 || fail "tmux not on PATH"
+
+sanitize_name() {
+  printf '%s' "$1" | tr -cs '[:alnum:]_-' '-' | sed 's/^-*//;s/-*$//' | cut -c1-32
+}
+
+if [[ -z "$NAME" ]]; then
+  NAME=$(sanitize_name "$(basename "$1")")
+  [[ -n "$NAME" ]] || NAME=run
+fi
+
+resolve_session() {
+  if [[ -n "$SESSION" ]]; then
+    printf '%s' "$SESSION"
+    return
+  fi
+
+  if [[ -n "${TMUX:-}" ]]; then
+    tmux display-message -p '#{session_name}'
+    return
+  fi
+
+  local rows
+  rows=$(tmux list-sessions -F '#{session_last_attached} #{session_name}' 2>/dev/null || true)
+  if [[ -n "$rows" ]]; then
+    printf '%s\n' "$rows" | sort -n | tail -1 | cut -d' ' -f2-
+    return
+  fi
+
+  printf '%s' "$DEFAULT_SESSION"
+}
+
+session_exists() {
+  tmux has-session -t "=$1" 2>/dev/null
+}
+
+session=$(resolve_session)
+
+cmd_line=$(printf '%q ' "$@")
+cmd_line=${cmd_line% }
+
+created=0
+if ! session_exists "$session"; then
+  created=1
+fi
+
+if [[ "$DRY_RUN" -eq 1 ]]; then
+  if [[ "$created" -eq 1 ]]; then
+    printf 'tmux new-session -d -P -s %q -n %q -c %q %q\n' "$session" "$NAME" "$CWD" "$cmd_line"
+  else
+    printf 'tmux new-window -P -t %q -n %q -c %q %q\n' "=$session:" "$NAME" "$CWD" "$cmd_line"
+  fi
+  exit 0
+fi
+
+if [[ "$created" -eq 1 ]]; then
+  info=$(
+    tmux new-session \
+      -d \
+      -P \
+      -F 'session=#{session_name} window=#{window_index} name=#{window_name}' \
+      -s "$session" \
+      -n "$NAME" \
+      -c "$CWD" \
+      "$cmd_line"
+  )
+else
+  info=$(
+    tmux new-window \
+      -P \
+      -F 'session=#{session_name} window=#{window_index} name=#{window_name}' \
+      -t "=$session:" \
+      -n "$NAME" \
+      -c "$CWD" \
+      "$cmd_line"
+  )
+fi
+
+printf '%s\n' "$info"
+printf 'cwd=%s\n' "$CWD"
+printf 'target=%s:%s\n' "$session" "$NAME"
+printf 'created=%s\n' "$created"
