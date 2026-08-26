@@ -9,10 +9,12 @@
 #
 # merge-pr only retries Buildkite jobs and posts bot comments; it never
 # commits. Skip `ff devbox go` (branch resolve, where scan, worktree create)
-# and attach a PR-scoped tmux session in ~/work/canva on maldini.
-# Bare PR numbers are not accepted; use the full GitHub URL.
+# and SSH to maldini, then hand off to `ff c merge-pr` for the tmux session
+# in ~/work/canva. Bare PR numbers are not accepted; use the full GitHub URL.
 set -euo pipefail
 
+# shellcheck source=/dev/null
+source "${FF_SCRIPT_HOME}/.lib/devbox.sh"
 # shellcheck source=/dev/null
 source "${FF_SCRIPT_HOME}/.lib/github-pr.sh"
 
@@ -29,12 +31,18 @@ is_github_pr_url "$1" || usage
 
 pr_url=$1
 
-if [[ "$pr_url" =~ /pull/([0-9]+) ]]; then
-  pr_number="${BASH_REMATCH[1]}"
-else
-  echo "error: could not parse PR number from: ${pr_url}" >&2
-  exit 1
-fi
+devbox_require_running "$DEFAULT_DEVBOX" || exit 1
 
-exec ff devbox attach "$DEFAULT_DEVBOX" "merge-pr-${pr_number}" /home/coder/work/canva \
-  -- ff c c "Please merge-pr $pr_url"
+remote_script=$(
+  cat <<EOF
+set -euo pipefail
+export PATH="\$HOME/scripts:\$PATH"
+cd "\$HOME/work/canva"
+exec ff c merge-pr $(printf '%q' "$pr_url")
+EOF
+)
+
+exec ssh -t \
+  -o ConnectTimeout=30 \
+  "coder.frankief/${DEFAULT_DEVBOX}" \
+  bash -lc "$(printf '%q' "$remote_script")"

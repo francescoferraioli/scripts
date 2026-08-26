@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+# Start Claude with merge-pr in a new tmux session (already on the devbox).
+#
+# Usage:
+#   ff c merge-pr [pr-url]
+#
+# Examples:
+#   ff c merge-pr
+#   ff c merge-pr https://github.com/canva/canva/pull/12345
+#
+# Runs in the current git root. With no URL, merge-pr uses the current
+# branch. Creates or attaches a tmux session and runs `ff c c`. Bare PR
+# numbers are not accepted; use the full GitHub URL.
+set -euo pipefail
+
+# shellcheck source=/dev/null
+source "${FF_SCRIPT_HOME}/.lib/github-pr.sh"
+# shellcheck source=/dev/null
+source "${FF_SCRIPT_HOME}/.lib/wt.sh"
+
+usage() {
+  echo "usage: ff c merge-pr [pr-url]" >&2
+  exit 1
+}
+
+[[ $# -le 1 ]] || usage
+
+pr_url=
+if [[ $# -eq 1 ]]; then
+  [[ -n "$1" ]] || usage
+  is_github_pr_url "$1" || usage
+  pr_url=$1
+fi
+
+git_root=$(git rev-parse --show-toplevel 2>/dev/null) || {
+  echo "error: not inside a git repository" >&2
+  exit 1
+}
+
+if [[ -n "$pr_url" ]]; then
+  pr_number=$(github_pr_number "$pr_url") || {
+    echo "error: could not parse PR number from: ${pr_url}" >&2
+    exit 1
+  }
+  session="merge-pr-${pr_number}"
+  prompt="Please merge-pr $pr_url"
+else
+  branch=$(git -C "$git_root" branch --show-current)
+  if [[ -n "$branch" ]]; then
+    session="merge-pr-$(wt_sanitize "$branch")"
+  else
+    session="merge-pr"
+  fi
+  prompt="Please merge-pr"
+fi
+
+exec ff devbox attach --local "$session" "$git_root" \
+  -- ff c c "$prompt"

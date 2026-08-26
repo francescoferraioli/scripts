@@ -87,6 +87,9 @@ run_tmux() {
     tmux send-keys -t "=$name:" "$cmd_line" Enter
   fi
 
+  if [[ -n "${TMUX:-}" ]]; then
+    exec tmux switch-client -t "=$name"
+  fi
   exec tmux attach-session -t "=$name"
 }
 
