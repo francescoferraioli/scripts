@@ -8,8 +8,9 @@
 #   ff devbox green-pr https://github.com/canva/canva/pull/12345
 #
 # Passes the same URL through to `ff devbox go` (which resolves it to the
-# head branch and picks the box that already has it, else maldini). Bare PR
-# numbers are not accepted; use the full GitHub URL.
+# head branch and picks the box that already has it, else maldini), then
+# hands off to `ff c green-pr`. Bare PR numbers are not accepted; use the
+# full GitHub URL.
 set -euo pipefail
 
 # shellcheck source=/dev/null
@@ -26,4 +27,4 @@ is_github_pr_url "$1" || usage
 
 pr_url=$1
 
-exec ff devbox go "$pr_url" -- ff c c "Please green-pr $pr_url"
+exec ff devbox go "$pr_url" -- ff c green-pr "$pr_url"
