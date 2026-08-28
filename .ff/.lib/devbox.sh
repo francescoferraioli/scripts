@@ -32,7 +32,10 @@ _devbox_reexec() {
 }
 
 devbox_status() {
-  ff devbox status --state "$1" 2>/dev/null || echo unknown
+  # ff used to exit 0 even when status failed, leaving stdout empty.
+  local status
+  status=$(ff devbox status --state "$1" 2>/dev/null || echo unknown)
+  echo "${status:-unknown}"
 }
 
 # Prints a skip line and returns 1 when the workspace is not running.
