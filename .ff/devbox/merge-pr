@@ -9,7 +9,7 @@
 #
 # merge-pr only retries Buildkite jobs and posts bot comments; it never
 # commits. Skip `ff devbox go` (branch resolve, where scan, worktree create)
-# and SSH to maldini, then hand off to `ff c merge-pr` for the tmux session
+# and SSH to claude, then hand off to `ff c merge-pr` for the tmux session
 # in ~/work/canva. Bare PR numbers are not accepted; use the full GitHub URL.
 set -euo pipefail
 
@@ -18,7 +18,7 @@ source "${FF_SCRIPT_HOME}/.lib/devbox.sh"
 # shellcheck source=/dev/null
 source "${FF_SCRIPT_HOME}/.lib/github-pr.sh"
 
-DEFAULT_DEVBOX=maldini
+DEFAULT_DEVBOX=claude
 
 usage() {
   echo "usage: ff devbox merge-pr <pr-url>" >&2
