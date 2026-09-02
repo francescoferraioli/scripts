@@ -10,7 +10,7 @@
 #
 # Picks the target with `ff devbox where`:
 #   - If a box already has a local copy of the branch, use that box
-#   - Otherwise default to claude
+#   - Otherwise default to forge
 # Then create ~/work/<sanitized-branch> if needed.
 #
 # On the chosen box:
@@ -23,7 +23,7 @@ source "${FF_SCRIPT_HOME}/.lib/devbox.sh"
 # shellcheck source=/dev/null
 source "${FF_SCRIPT_HOME}/.lib/github-pr.sh"
 
-DEFAULT_DEVBOX=claude
+DEFAULT_DEVBOX=forge
 
 usage() {
   echo "usage: ff devbox go <branch-or-pr-url> [-- <command...>]" >&2
