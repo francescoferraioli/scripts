@@ -1,0 +1,148 @@
+#!/usr/bin/env bash
+# Compact Coder workspace status with Claude AI activity.
+#
+# Usage:
+#   ff devbox s [devbox...]
+#   ff devbox s --all
+#
+# With no devbox names, shows workspaces from `ff devbox all`.
+# --all lists every workspace owned by you in Coder.
+# Columns: DEVBOX STATUS TRANSITION AI
+set -euo pipefail
+
+show_all=false
+devboxes=()
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --all)
+      show_all=true
+      shift
+      ;;
+    -h | --help)
+      cat <<EOF
+usage: ff devbox s [devbox...]
+       ff devbox s --all
+
+Show Coder workspace status with Claude AI activity. Default devboxes: $(ff devbox all).
+
+Columns: DEVBOX  STATUS  TRANSITION  AI
+
+Options:
+  --all  List every Coder workspace you own (not just ff devbox all)
+EOF
+      exit 0
+      ;;
+    *)
+      devboxes+=("$1")
+      shift
+      ;;
+  esac
+done
+
+if ! command -v coder >/dev/null 2>&1; then
+  echo "error: coder CLI not found; install Coder CLI and run 'coder login'" >&2
+  exit 1
+fi
+
+if [[ "$show_all" == true && ${#devboxes[@]} -gt 0 ]]; then
+  echo "error: pass devbox names or --all, not both" >&2
+  exit 1
+fi
+
+if [[ "$show_all" != true && ${#devboxes[@]} -eq 0 ]]; then
+  read -r -a devboxes <<< "$(ff devbox all)"
+fi
+
+CODER_JSON=$(coder list -o json --search 'owner:me')
+export CODER_JSON
+export SHOW_ALL="$show_all"
+export DEVBOX_NAMES="${devboxes[*]}"
+
+tmp_dir=$(mktemp -d)
+trap 'rm -rf "$tmp_dir"' EXIT
+export TMP_DIR="$tmp_dir"
+
+python3 <<'PY' >"${tmp_dir}/rows.tsv"
+import json
+import os
+import sys
+
+show_all = os.environ.get("SHOW_ALL") == "true"
+names = set(filter(None, os.environ.get("DEVBOX_NAMES", "").split()))
+
+workspaces = json.loads(os.environ["CODER_JSON"])
+if not show_all:
+    workspaces = [w for w in workspaces if w["name"] in names]
+    missing = sorted(names - {w["name"] for w in workspaces})
+    if missing:
+        for name in missing:
+            print(f"{name}: not found in Coder", file=sys.stderr)
+        if not workspaces:
+            sys.exit(1)
+
+workspaces.sort(key=lambda w: w["name"])
+
+for w in workspaces:
+    build = w.get("latest_build") or {}
+    status = build.get("status") or "unknown"
+    transition = build.get("transition") or ""
+    print(f"{w['name']}\t{status}\t{transition}")
+PY
+
+if [[ ! -s "${tmp_dir}/rows.tsv" ]]; then
+  echo "no matching workspaces"
+  exit 0
+fi
+
+pids=()
+while IFS=$'\t' read -r name status _transition; do
+  if [[ "$status" == "running" ]]; then
+    (
+      ff devbox ai-status --state "$name" 2>/dev/null || echo unknown
+    ) >"${tmp_dir}/ai.${name}" &
+    pids+=($!)
+  else
+    printf 'idle\n' >"${tmp_dir}/ai.${name}"
+  fi
+done <"${tmp_dir}/rows.tsv"
+
+for pid in "${pids[@]}"; do
+  wait "$pid" || true
+done
+
+python3 <<'PY'
+import os
+from pathlib import Path
+
+tmp_dir = Path(os.environ["TMP_DIR"])
+rows = []
+for line in (tmp_dir / "rows.tsv").read_text().splitlines():
+    name, status, transition = line.split("\t")
+    ai_path = tmp_dir / f"ai.{name}"
+    ai = ai_path.read_text().strip() if ai_path.exists() else "unknown"
+    rows.append((name, status, transition, ai or "unknown"))
+
+widths = [
+    max(len("DEVBOX"), *(len(r[0]) for r in rows)),
+    max(len("STATUS"), *(len(r[1]) for r in rows)),
+    max(len("TRANSITION"), *(len(r[2]) for r in rows)),
+    max(len("AI"), *(len(r[3]) for r in rows)),
+]
+
+header = (
+    f"{'DEVBOX':<{widths[0]}}  "
+    f"{'STATUS':<{widths[1]}}  "
+    f"{'TRANSITION':<{widths[2]}}  "
+    f"{'AI':<{widths[3]}}"
+)
+print(header)
+print("-" * len(header))
+for row in rows:
+    print(
+        f"{row[0]:<{widths[0]}}  "
+        f"{row[1]:<{widths[1]}}  "
+        f"{row[2]:<{widths[2]}}  "
+        f"{row[3]:<{widths[3]}}"
+    )
+PY
