@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# Print the name of this machine: Coder workspace slug, or laptop.
+#
+# Usage:
+#   ff devbox name
+#
+# Uses CODER_WORKSPACE_NAME when set (totti, maldini, pirlo, forge, …).
+# Off a Coder workspace that env var is unset, so this prints laptop.
+set -euo pipefail
+
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+  cat <<'EOF'
+usage: ff devbox name
+
+Print the Coder workspace slug for this machine (CODER_WORKSPACE_NAME).
+Prints laptop when that env var is unset.
+EOF
+  exit 0
+fi
+
+slug=$(printf '%s' "${CODER_WORKSPACE_NAME:-}" | tr '[:upper:]' '[:lower:]')
+slug=${slug// /}
+if [[ -z "$slug" ]]; then
+  slug="laptop"
+fi
+echo "$slug"
