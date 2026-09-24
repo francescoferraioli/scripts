@@ -38,10 +38,10 @@ while [[ $# -gt 0 ]]; do
       cat <<EOF
 usage: ff devbox stop [--safe] <devbox>|all [<devbox>|all...]
 
-Stop Coder devbox workspaces.
+Stop Coder devbox workspaces. Workspaces that are not running are skipped.
 
 Options:
-  --safe  Only stop devboxes that are running and idle (see ff devbox ai-status)
+  --safe  Also skip running devboxes that are not idle (see ff devbox ai-status)
 EOF
       exit 0
       ;;
@@ -56,31 +56,29 @@ if [[ ${#devboxes[@]} -eq 0 ]]; then
   usage
 fi
 
-if [[ "$safe" == true ]]; then
-  to_stop=()
-  for devbox in "${devboxes[@]}"; do
-    status=$(ff devbox status --state "$devbox" 2>/dev/null || echo unknown)
-    if [[ "$status" != "running" ]]; then
-      echo "$devbox: skipping (status: $status)" >&2
-      continue
-    fi
+to_stop=()
+for devbox in "${devboxes[@]}"; do
+  if ! devbox_skip_unless_running "$devbox"; then
+    continue
+  fi
 
+  if [[ "$safe" == true ]]; then
     ai_status=$(ff devbox ai-status --state "$devbox" 2>/dev/null || echo unknown)
     if [[ "$ai_status" != "idle" ]]; then
       echo "$devbox: skipping (ai-status: ${ai_status})" >&2
       continue
     fi
-
-    to_stop+=("$devbox")
-  done
-
-  if [[ ${#to_stop[@]} -eq 0 ]]; then
-    echo "no devboxes to stop" >&2
-    exit 0
   fi
 
-  devboxes=("${to_stop[@]}")
+  to_stop+=("$devbox")
+done
+
+if [[ ${#to_stop[@]} -eq 0 ]]; then
+  echo "no devboxes to stop" >&2
+  exit 0
 fi
+
+devboxes=("${to_stop[@]}")
 
 prefix_output() {
   local devbox=$1
