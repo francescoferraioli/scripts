@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+# Copy local Cursor screenshots onto one running Coder devbox.
+# SSH hosts are coder.frankief/<name>; rsync cannot use a hostname that
+# contains '/', so the short name is passed through an ssh wrapper.
+#
+# Usage:
+#   rsync-devbox-screenshots totti
+#
+# Source:  $TMPDIR/cursor/screenshots
+# Dest:    the same path on the devbox. Non-interactive SSH on these boxes
+#          leaves TMPDIR unset, so the remote side falls back to /tmp.
+set -euo pipefail
+
+SCRIPT_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
+REL_DIR="cursor/screenshots"
+
+ssh_devbox() {
+  local name=$1
+  shift
+  ssh \
+    -o BatchMode=yes \
+    -o ConnectTimeout=30 \
+    -o ClearAllForwardings=yes \
+    -o PermitLocalCommand=no \
+    "coder.frankief/${name}" \
+    "$@"
+}
+
+# Internal: rsync -e invokes this as: rsync-devbox-screenshots --ssh <host> <args...>
+if [[ "${1:-}" == "--ssh" ]]; then
+  shift
+  host=${1##*@}
+  shift
+  exec ssh \
+    -o BatchMode=yes \
+    -o ConnectTimeout=30 \
+    -o ClearAllForwardings=yes \
+    -o PermitLocalCommand=no \
+    "coder.frankief/${host}" \
+    "$@"
+fi
+
+if [[ $# -ne 1 || -z "${1:-}" ]]; then
+  echo "usage: rsync-devbox-screenshots <devbox-name>" >&2
+  exit 1
+fi
+
+name=$1
+local_tmpdir="${TMPDIR:-/tmp}"
+local_tmpdir="${local_tmpdir%/}"
+local_dir="${local_tmpdir}/${REL_DIR}"
+
+if [[ ! -d "$local_dir" ]]; then
+  echo "error: local screenshots dir not found: ${local_dir}" >&2
+  exit 1
+fi
+
+devbox_status=$(ff devbox status -s "$name")
+if [[ "$devbox_status" != "running" ]]; then
+  echo "error: ${name} is not running (status: ${devbox_status})" >&2
+  exit 1
+fi
+
+remote_tmpdir=$(ssh_devbox "$name" 'printf %s "${TMPDIR:-/tmp}"')
+remote_tmpdir="${remote_tmpdir%/}"
+if [[ -z "$remote_tmpdir" || "$remote_tmpdir" != /* ]]; then
+  echo "error: remote TMPDIR is not an absolute path: [${remote_tmpdir}]" >&2
+  exit 1
+fi
+remote_dir="${remote_tmpdir}/${REL_DIR}"
+
+ssh_devbox "$name" "mkdir -p $(printf '%q' "$remote_dir")"
+
+RSYNC_BIN="${RSYNC_BIN:-$(command -v /opt/homebrew/bin/rsync || command -v rsync)}"
+echo "==> ${name} (${local_dir}/ -> coder.frankief/${name}:${remote_dir}/)"
+"$RSYNC_BIN" -av \
+  -e "${SCRIPT_PATH} --ssh" \
+  "${local_dir}/" \
+  "${name}:${remote_dir}/"
