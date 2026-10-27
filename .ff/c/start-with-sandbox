@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Call start with app_sandbox_editor added to the -e list
+# Call start with app_sandbox_editor added to the positional pages
 env="${1:-prod}"
 [[ $# -ge 1 ]] && shift
 # Default to home as page when nothing provided

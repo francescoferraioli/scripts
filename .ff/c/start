@@ -1,50 +1,17 @@
 #!/usr/bin/env bash
 
-# Optional flags before -e entries: sm_mode via no-sm / sm (last wins), t → infra highway tunnel
+# Optional flag before the proxy and pages: t → infra highway tunnel
 optional_args=()
-sm_mode=default
-while [[ "${1:-}" == "no-sm" || "${1:-}" == "sm" || "${1:-}" == "t" ]]; do
-  case "$1" in
-    no-sm) sm_mode=no_sm ;;
-    sm) sm_mode=sm ;;
-    t) optional_args+=(-t enabled) ;;
-  esac
+while [[ "${1:-}" == "t" ]]; do
+  optional_args+=(-t enabled)
   shift
 done
 
 env="${1:-prod}"
 [[ $# -ge 1 ]] && shift
 
-# Build -e args from remaining params (default to home if none)
-extra_es=("${@:-home}")
-
-editor_included=false
-for e in "${extra_es[@]}"; do
-  if [[ "$e" == "editor" ]]; then
-    editor_included=true
-    break
-  fi
-done
-
-use_source_maps=true
-case "$sm_mode" in
-  no_sm) use_source_maps=false ;;
-  sm) ;;
-  default)
-    if [[ "$editor_included" == true ]]; then
-      use_source_maps=false
-    fi
-    ;;
-esac
-
-if [[ "$use_source_maps" == false ]]; then
-  optional_args+=(-s false)
-fi
-
-e_args=()
-for e in "${extra_es[@]}"; do
-  e_args+=(-e "$e")
-done
+# Pages are positional args (default to home if none). rspack-dev-server has no -e.
+pages=("${@:-home}")
 
 cd ~/work/canva/web
-pnpm webpack-dev-server -p "$env" "${optional_args[@]}" "${e_args[@]}"
+pnpm rspack-dev-server "${pages[@]}" -p "$env" "${optional_args[@]}"
