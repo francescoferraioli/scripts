@@ -92,7 +92,7 @@ for devbox in "${devboxes[@]}"; do
   (
     {
       echo "stopping ${devbox}..."
-      coder stop -y "$devbox"
+      coder stop -y "$(devbox_coder_workspace "$devbox")"
     } 2>&1 | prefix_output "$devbox"
   ) &
   pids+=($!)

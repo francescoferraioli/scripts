@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Pull markdown drop files from frankief's named Coder workspaces (forge, totti, pirlo, maldini).
-# SSH hosts are coder.frankief/<name> (see ff devbox run); rsync cannot use a
-# hostname that contains '/', so short names are used with an ssh wrapper.
+# SSH hosts come from devbox_ssh_host (coder.frankief/<name>, or
+# main.<name>.forge-cloud.coder). rsync cannot use a hostname that contains
+# '/', so short names are used with an ssh wrapper.
 #
 # Usage:
 #   rsync-devbox-incoming            # sync all (ff devbox all)
@@ -14,6 +15,9 @@
 set -euo pipefail
 
 SCRIPT_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
+FF_SCRIPT_HOME="${FF_SCRIPT_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.ff" && pwd)}"
+# shellcheck source=/dev/null
+source "${FF_SCRIPT_HOME}/.lib/devbox.sh"
 
 # Internal: rsync -e invokes this as: rsync-devbox-incoming --ssh <host> <args...>
 if [[ "${1:-}" == "--ssh" ]]; then
@@ -25,7 +29,7 @@ if [[ "${1:-}" == "--ssh" ]]; then
     -o ConnectTimeout=30 \
     -o ClearAllForwardings=yes \
     -o PermitLocalCommand=no \
-    "coder.frankief/${host}" \
+    "$(devbox_ssh_host "$host")" \
     "$@"
 fi
 
@@ -53,7 +57,7 @@ sync_one() {
 
   mkdir -p "$dest"
 
-  echo "==> ${name} (coder.frankief/${name}:${REMOTE_INCOMING}/ -> ${dest}/)"
+  echo "==> ${name} ($(devbox_ssh_host "$name"):${REMOTE_INCOMING}/ -> ${dest}/)"
   # Only transfer .md files (and dirs needed to reach them). Remove from remote after copy.
   "$RSYNC_BIN" -av \
     --include='*/' \

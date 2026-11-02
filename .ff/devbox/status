@@ -11,6 +11,9 @@
 # --state prints only the Coder build status for one devbox (e.g. running, stopping).
 set -euo pipefail
 
+# shellcheck source=/dev/null
+source "${FF_SCRIPT_HOME}/.lib/devbox.sh"
+
 show_all=false
 state_only=false
 devboxes=()
@@ -75,7 +78,13 @@ if [[ "$show_all" != true && ${#devboxes[@]} -eq 0 ]]; then
   read -r -a devboxes <<< "$(ff devbox all)"
 fi
 
-CODER_JSON=$(coder list -o json --search 'owner:me')
+if [[ "$show_all" == true ]]; then
+  CODER_JSON=$(coder list -o json --search 'owner:me')
+elif [[ ${#devboxes[@]} -eq 0 ]]; then
+  CODER_JSON=$(devbox_coder_list_json)
+else
+  CODER_JSON=$(devbox_coder_list_json "${devboxes[@]}")
+fi
 export CODER_JSON
 export SHOW_ALL="$show_all"
 export STATE_ONLY="$state_only"

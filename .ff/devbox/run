@@ -85,7 +85,7 @@ for devbox in "${devboxes[@]}"; do
     script=$(remote_script "$@")
     ssh -o BatchMode=yes -o ConnectTimeout=300 \
       -o ClearAllForwardings=yes -o PermitLocalCommand=no \
-      "coder.frankief/$devbox" \
+      "$(devbox_ssh_host "$devbox")" \
       bash -lc "$(printf '%q' "$script")" 2>&1 | prefix_output "$devbox"
   ) &
 done

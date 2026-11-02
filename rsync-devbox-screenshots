@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Copy local Cursor screenshots onto one running Coder devbox.
-# SSH hosts are coder.frankief/<name>; rsync cannot use a hostname that
-# contains '/', so the short name is passed through an ssh wrapper.
+# SSH hosts come from devbox_ssh_host (coder.frankief/<name>, or
+# main.<name>.forge-cloud.coder). rsync cannot use a hostname that contains
+# '/', so the short name is passed through an ssh wrapper.
 #
 # Usage:
 #   rsync-devbox-screenshots totti
@@ -12,6 +13,9 @@
 set -euo pipefail
 
 SCRIPT_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
+FF_SCRIPT_HOME="${FF_SCRIPT_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.ff" && pwd)}"
+# shellcheck source=/dev/null
+source "${FF_SCRIPT_HOME}/.lib/devbox.sh"
 REL_DIR="cursor/screenshots"
 
 ssh_devbox() {
@@ -22,7 +26,7 @@ ssh_devbox() {
     -o ConnectTimeout=30 \
     -o ClearAllForwardings=yes \
     -o PermitLocalCommand=no \
-    "coder.frankief/${name}" \
+    "$(devbox_ssh_host "$name")" \
     "$@"
 }
 
@@ -36,7 +40,7 @@ if [[ "${1:-}" == "--ssh" ]]; then
     -o ConnectTimeout=30 \
     -o ClearAllForwardings=yes \
     -o PermitLocalCommand=no \
-    "coder.frankief/${host}" \
+    "$(devbox_ssh_host "$host")" \
     "$@"
 fi
 
@@ -72,7 +76,7 @@ remote_dir="${remote_tmpdir}/${REL_DIR}"
 ssh_devbox "$name" "mkdir -p $(printf '%q' "$remote_dir")"
 
 RSYNC_BIN="${RSYNC_BIN:-$(command -v /opt/homebrew/bin/rsync || command -v rsync)}"
-echo "==> ${name} (${local_dir}/ -> coder.frankief/${name}:${remote_dir}/)"
+echo "==> ${name} (${local_dir}/ -> $(devbox_ssh_host "$name"):${remote_dir}/)"
 "$RSYNC_BIN" -av \
   -e "${SCRIPT_PATH} --ssh" \
   "${local_dir}/" \

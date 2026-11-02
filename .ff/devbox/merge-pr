@@ -44,5 +44,5 @@ EOF
 
 exec ssh -t \
   -o ConnectTimeout=30 \
-  "coder.frankief/${DEFAULT_DEVBOX}" \
+  "$(devbox_ssh_host "$DEFAULT_DEVBOX")" \
   bash -lc "$(printf '%q' "$remote_script")"

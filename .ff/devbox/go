@@ -212,5 +212,5 @@ EOF
 
 exec ssh -t \
   -o ConnectTimeout=30 \
-  "coder.frankief/${devbox}" \
+  "$(devbox_ssh_host "$devbox")" \
   bash -lc "$(printf '%q' "$remote_script")"

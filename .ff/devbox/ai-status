@@ -119,7 +119,7 @@ ai_status_for_devbox() {
 
   if command -v coder >/dev/null 2>&1; then
     local workspace_status
-    workspace_status=$(coder list -o json --search "owner:me name:${devbox}" 2>/dev/null | python3 -c '
+    workspace_status=$(coder list -o json --search "$(devbox_coder_list_search "$devbox")" 2>/dev/null | python3 -c '
 import json, sys
 try:
     workspaces = json.load(sys.stdin)

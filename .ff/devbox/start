@@ -48,7 +48,7 @@ for devbox in "${devboxes[@]}"; do
   (
     {
       echo "starting ${devbox}..."
-      coder start -y "$devbox"
+      coder start -y "$(devbox_coder_workspace "$devbox")"
     } 2>&1 | prefix_output "$devbox"
   ) &
   pids+=($!)
