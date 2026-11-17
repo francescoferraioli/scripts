@@ -1,2 +1,10 @@
 cd ~/source/repos/sabina/
-yarn convex:deploy
+target="${1:-}"
+case "$target" in
+  "") yarn convex:deploy ;;
+  dev|prod) yarn "convex:deploy:$target" ;;
+  *)
+    echo "Usage: deploy [dev|prod]" >&2
+    exit 1
+    ;;
+esac
