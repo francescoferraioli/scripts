@@ -23,11 +23,11 @@ esac
 
 case "$MODE" in
   read)
-    SUFFIX="reports-0"
+    SUFFIX="-analytics"
     ACCESS_LEVEL="read"
     ;;
   write)
-    SUFFIX="primary"
+    SUFFIX=""
     ACCESS_LEVEL="readwrite"
     ;;
   *)
@@ -36,7 +36,7 @@ case "$MODE" in
     ;;
 esac
 
-exec infra db proxy "${FLAVOR}-app-oauth-credential-20250128-${SUFFIX}" \
+exec infra db proxy "${FLAVOR}-app-oauth-credential${SUFFIX}" \
   --db-type mysql \
   --access-level "$ACCESS_LEVEL" \
   --flavor "$FLAVOR"
