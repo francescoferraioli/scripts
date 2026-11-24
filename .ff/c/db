@@ -21,13 +21,16 @@ case "$FLAVOR" in
     ;;
 esac
 
+SUFFIX=""
+
 case "$MODE" in
   read)
-    SUFFIX="-analytics"
     ACCESS_LEVEL="read"
+    if [[ "$FLAVOR" == prod ]]; then
+      SUFFIX="-analytics"
+    fi
     ;;
   write)
-    SUFFIX=""
     ACCESS_LEVEL="readwrite"
     ;;
   *)
