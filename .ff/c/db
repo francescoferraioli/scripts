@@ -37,6 +37,6 @@ case "$MODE" in
 esac
 
 exec infra db proxy "${FLAVOR}-app-oauth-credential${SUFFIX}" \
-  --db-type mysql \
+  --db-type aurora-mysql \
   --access-level "$ACCESS_LEVEL" \
   --flavor "$FLAVOR"
